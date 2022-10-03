@@ -1,5 +1,8 @@
+from turtle import backward
 import pygame
 from button import Button
+import PathfindingScreen
+import SortingScreen
 
 #initilaze the pygame
 pygame.init()
@@ -15,11 +18,14 @@ pygame.display.set_icon(icon)
 # Background
 background = pygame.image.load('assets/background.png')
 
+
+
 gui_font = pygame.font.Font(None,30)
 
 button1 = Button('Pathfinding Algorithms',300,40,(400,520),5,screen,gui_font)
 button2 = Button('Sorting Algorithms',300,40,(1920 - 700,520),5,screen,gui_font)
 exitbutton = Button('Exit',200,40,(860,820),5,screen,gui_font)
+
 
 # Game Loop
 running = True
@@ -36,12 +42,15 @@ while running:
 
     if exitbutton.draw():
         running = False
-
     
+    
+
     if button1.draw():
-        print("butonq")
+        if not PathfindingScreen.pathfindingScreen(screen,background):
+            running = False
     
     if button2.draw():
-        print("butonq")
+        if not SortingScreen.sortingScreen(screen,background):
+            running = False
     
     pygame.display.update()

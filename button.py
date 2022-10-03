@@ -2,13 +2,15 @@ from argparse import Action
 import pygame
 
 class Button:
-    def __init__(self,text,width,height,pos,elevation,screen,gui_font):
+    def __init__(self,text,width,height,pos,elevation,screen,gui_font,img = None):
         #Core attributes 
         self.pressed = False
         self.elevation = elevation
         self.dynamic_elecation = elevation
         self.original_y_pos = pos[1]
+        self.original_x_pos = pos[0]
         self.screen = screen
+        self.img = img
 
         # top rectangle 
         self.top_rect = pygame.Rect(pos,(width,height))
@@ -23,12 +25,17 @@ class Button:
     def draw(self):
         # elevation logic 
         self.top_rect.y = self.original_y_pos - self.dynamic_elecation
-        self.text_rect.center = self.top_rect.center        
+        self.text_rect.center = self.top_rect.center
         self.bottom_rect.midtop = self.top_rect.midtop
         self.bottom_rect.height = self.top_rect.height + self.dynamic_elecation      
         pygame.draw.rect(self.screen,self.bottom_color, self.bottom_rect,border_radius = 12)
         pygame.draw.rect(self.screen,self.top_color, self.top_rect,border_radius = 12)
-        self.screen.blit(self.text_surf, self.text_rect)
+        
+        if self.img != None:
+            self.screen.blit(self.img, (self.original_x_pos,self.original_y_pos - self.dynamic_elecation))
+        else:
+            self.screen.blit(self.text_surf, self.text_rect)
+        
         return self.check_click()
 
     def check_click(self):
@@ -42,7 +49,6 @@ class Button:
             else:
                 self.dynamic_elecation = self.elevation
                 if self.pressed == True:
-                    print('click')
                     action = True
                     self.pressed = False
         else:
