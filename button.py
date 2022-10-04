@@ -19,11 +19,15 @@ class Button:
         self.bottom_rect = pygame.Rect(pos,(width,height))
         self.bottom_color = '#2C3639'
         #text
-        self.text_surf = gui_font.render(text,True,'#000000')
+        self.text = text
+        self.gui_font = gui_font
+        self.text_surf = gui_font.render(self.text,True,'#000000')
         self.text_rect = self.text_surf.get_rect(center = self.top_rect.center)
 
     def draw(self):
-        # elevation logic 
+        # elevation logic
+        self.text_surf = self.gui_font.render(self.text,True,'#000000')
+        self.text_rect = self.text_surf.get_rect(center = self.top_rect.center)
         self.top_rect.y = self.original_y_pos - self.dynamic_elecation
         self.text_rect.center = self.top_rect.center
         self.bottom_rect.midtop = self.top_rect.midtop
