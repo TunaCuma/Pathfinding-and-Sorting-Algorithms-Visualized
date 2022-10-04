@@ -1,7 +1,7 @@
 
 from hashlib import algorithms_available
 from pickle import FALSE
-from re import T
+from re import T, search
 import pygame
 from button import Button
 
@@ -220,8 +220,8 @@ def pathfindingScreen(screen,background):
     clock = pygame.time.Clock()
 
     grid = Grid(50,20,30,210,350, screen)
-    grid.grid[5][5].change_status(TRAVELER)
-    grid.grid[6][6].change_status(DESTINATION)
+    grid.grid[1][1].change_status(TRAVELER)
+    grid.grid[0][0].change_status(DESTINATION)
 
     backwardImg = pygame.image.load('assets/backwards.png')
     background2 = pygame.image.load('assets/background2.png')
@@ -307,8 +307,8 @@ def pathfindingScreen(screen,background):
             for i in range(grid.xCount):
                 for j in range(grid.yCount):
                     grid.grid[i][j].change_status(EMPTY)
-            grid.grid[5][5].change_status(TRAVELER)
-            grid.grid[6][6].change_status(DESTINATION)
+            grid.grid[1][1].change_status(TRAVELER)
+            grid.grid[0][0].change_status(DESTINATION)
             done = False
             isVisualStarted = False
         if clearWalls.draw():
@@ -329,12 +329,14 @@ def pathfindingScreen(screen,background):
             pass
         grid.Draw()
 
-        select = 0
+        select = 1
         
         if isVisualStarted:
             
             if select == 0:
-                isVisualStarted = breadthFirstSearchOneStep(grid, searchQueue) 
+                isVisualStarted = breadthFirstSearchOneStep(grid, searchQueue)
+            elif select == 1:
+                isVisualStarted = depthFirstSearchOneStep(grid, searchQueue) 
 
 
         pygame.display.update()
@@ -369,10 +371,8 @@ def depthFirstSearchOneStep(grid, stack):
             if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 20 and current[0] + coordinate[0]< 50 :
                 if grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == EMPTY :
                     grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRIED)
-                    pygame.display.update()
                     stack.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
-                    grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRIED)
-                    pygame.display.update()
+                    return True
                 elif grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == DESTINATION :
                     return True
     return False
