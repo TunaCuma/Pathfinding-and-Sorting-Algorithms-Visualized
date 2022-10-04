@@ -20,12 +20,15 @@ painting = True
 paint = WALL
 keyDown = False
 
+travelerCoords = (1,1)
 
 class Cell(object):
-    def __init__(self, size, color, screen, x, y):
+    def __init__(self, size, color, screen, x, y, i, j):
         self.size = size
         self.x = x
         self.y = y
+        self.i = i
+        self.j = j
         self.pos = (self.x, self.y)
         self.rect = pygame.Rect((self.x, self.y), (self.size, self.size))
         self.win = screen
@@ -79,6 +82,7 @@ class Cell(object):
         global paint
         global painting
         global keyDown
+        global travelerCoords
         action = False
         mouse_pos = pygame.mouse.get_pos()
         if pygame.mouse.get_pressed()[0]:
@@ -119,6 +123,7 @@ class Cell(object):
         elif draggingTrav and self.rect.collidepoint(mouse_pos): #traveler dropped here
             self.change_status(TRAVELER)
             draggingTrav = False
+            travelerCoords = (self.i, self.j)
 
         elif draggingDest and self.rect.collidepoint(mouse_pos): #destination dropped here
             self.change_status(DESTINATION)
@@ -157,17 +162,21 @@ class Cell(object):
         return action
     
     def change_status(self, status):
+        global travelerCoords
         self.status = status
         if self.status == EMPTY:
             self.change_color((255,255,255,220))
         elif self.status == WALL:
             self.change_color((20,20,20,255))
         elif self.status == TRAVELER:
+            travelerCoords = (self.i,self.j)
             self.change_color((255,0,255,200))
         elif self.status == DESTINATION:
             self.change_color((0,255,255,200))
         elif self.status == BOMB:
             self.change_color((255,255,0,200))
+        elif self.status == TRIED:
+            self.change_color((0,255,0,200))
 
 
 
@@ -187,7 +196,7 @@ class Grid(object):
             self.undoList[0].append([])
             self.undoList[1].append([])
             for j in range(self.yCount):
-                self.grid[i].append(Cell(self.cellSize, self.color, self.win, self.pos[0]+(self.cellSize*i), self.pos[1]+(self.cellSize*j)))
+                self.grid[i].append(Cell(self.cellSize, self.color, self.win, self.pos[0]+(self.cellSize*i), self.pos[1]+(self.cellSize*j),i,j))
                 self.undoList[0][i].append(self.color)
                 self.undoList[1][i].append(self.color)
 
@@ -240,101 +249,112 @@ def pathfindingScreen(screen,background):
     text_surf = title_font.render("Pathfinding Visualizer",True,'#FFFFFF')
     menuSurface = pygame.Surface((1860,325), pygame.SRCALPHA)
 
-    current = (10,10)
-    searchQueue = [current]
+    
     done = False
+    current = travelerCoords
+    searchQueue = [current]
 
     isVisualStarted = False
     while running:
         msElapsed = clock.tick(60)
-        if not isVisualStarted :
+        
 
             
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                    return False
-
-            # RGB = Red, Green, Blue
-            screen.fill((0, 0, 0))
-            # Background Image
-            screen.blit(background2, (0, 0))
-            pygame.draw.rect(menuSurface,(180,188,188,150),(180,0,1860,325))
-            pygame.draw.rect(menuSurface,(250,245,245,190),(180,0,1860,325),2)
-            screen.blit(menuSurface, (0,0))
-            screen.blit(text_surf,(780,140,400,40))
-
-            if backward.draw():
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
                 running = False
-                return True
-            if start.draw():
-                print("start")
+                return False
 
-            if algorithms.draw():
-                pass
-            if mazesAndPatterns.draw():
-                pass
-            if addBomb.draw():
-                if not bombAdded:
-                    for i in range(grid.xCount):
-                        for j in range(grid.yCount):
-                            if grid.grid[i][j].status == EMPTY and not bombAdded:
-                                grid.grid[i][j].change_status(BOMB)
-                                bombAdded = True
-                                break
-                else:
-                    for i in range(grid.xCount):
-                        for j in range(grid.yCount):
-                            if grid.grid[i][j].status == BOMB and bombAdded:
-                                grid.grid[i][j].change_status(EMPTY)
-                                bombAdded = False
-                                break
+        # RGB = Red, Green, Blue
+        screen.fill((0, 0, 0))
+        # Background Image
+        screen.blit(background2, (0, 0))
+        pygame.draw.rect(menuSurface,(180,188,188,150),(180,0,1860,325))
+        pygame.draw.rect(menuSurface,(250,245,245,190),(180,0,1860,325),2)
+        screen.blit(menuSurface, (0,0))
+        screen.blit(text_surf,(780,140,400,40))
 
-            if clearGrid.draw():
-                for i in range(grid.xCount):
-                    for j in range(grid.yCount):
-                        grid.grid[i][j].change_status(EMPTY)
-                grid.grid[1][1].change_status(TRAVELER)
-                grid.grid[48][18].change_status(DESTINATION)
-            if clearWalls.draw():
-                for i in range(grid.xCount):
-                    for j in range(grid.yCount):
-                        if grid.grid[i][j].status == WALL:
-                            grid.grid[i][j].change_status(EMPTY) 
-            if clearPath.draw():
-                for i in range(grid.xCount):
-                    for j in range(grid.yCount):
-                        if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == RIGTH_PATH:
-                            grid.grid[i][j].change_status(EMPTY) 
-            if speed.draw():
-                pass
-            if theme.draw():
-                pass
-            grid.Draw()
-            pygame.display.update()
+        if backward.draw():
+            running = False
+            return True
+        if start.draw() and not isVisualStarted:
+            current = travelerCoords
+            searchQueue = [current]
             isVisualStarted = True
-        else:
-            current = searchQueue.pop(0) 
-            
-            coordinates = [[0,1],[0,-1],[1,0],[-1,0]]
 
-            for coordinate in coordinates:
+        if algorithms.draw():
+            pass
+        if mazesAndPatterns.draw():
+            pass
+        if addBomb.draw():
+            if not bombAdded:
+                for i in range(grid.xCount):
+                    for j in range(grid.yCount):
+                        if grid.grid[i][j].status == EMPTY and not bombAdded:
+                            grid.grid[i][j].change_status(BOMB)
+                            bombAdded = True
+                            break
+            else:
+                for i in range(grid.xCount):
+                    for j in range(grid.yCount):
+                        if grid.grid[i][j].status == BOMB and bombAdded:
+                            grid.grid[i][j].change_status(EMPTY)
+                            bombAdded = False
+                            break
+
+        if clearGrid.draw():
+            for i in range(grid.xCount):
+                for j in range(grid.yCount):
+                    grid.grid[i][j].change_status(EMPTY)
+            grid.grid[1][1].change_status(TRAVELER)
+            grid.grid[48][18].change_status(DESTINATION)
+            done = False
+            isVisualStarted = False
+        if clearWalls.draw():
+            for i in range(grid.xCount):
+                for j in range(grid.yCount):
+                    if grid.grid[i][j].status == WALL:
+                        grid.grid[i][j].change_status(EMPTY) 
+        if clearPath.draw():
+            for i in range(grid.xCount):
+                for j in range(grid.yCount):
+                    if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == RIGTH_PATH:
+                        grid.grid[i][j].change_status(EMPTY)
+            done = False
+            isVisualStarted = False
+        if speed.draw():
+            pass
+        if theme.draw():
+            pass
+        grid.Draw()
+
+        
+        
+        if isVisualStarted:
+            if current and not done:
+                current = searchQueue.pop(0) 
+                
+            
+                coordinates = [[0,1],[0,-1],[1,0],[-1,0]]
+                    
+                for coordinate in coordinates:
                     if current[0] < 49 and current[1] < 19 and current[0] > 0 and current[1] > 0:
                         if grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == EMPTY :
-                            grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRAVELER)
+                            grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRIED)
                             pygame.display.update()
                             searchQueue.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
                             grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRIED)
                             pygame.display.update()
                         elif grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == DESTINATION :
                             done = True
-                            running = False
 
-                            break
+
+        pygame.display.update()
+
 
 def breadthFirstSearch(Grid, clock):
-    current = (10,10)
+    current = travelerCoords
     searchQueue = [current]
 
     done = False
