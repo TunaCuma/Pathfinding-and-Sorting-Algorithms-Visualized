@@ -1,9 +1,6 @@
-
-from hashlib import algorithms_available
-from pickle import FALSE
-from re import T, search
 import pygame
 from button import Button
+from dropdownmenu import dropdownmenu
 
 EMPTY = 0
 WALL = 1
@@ -16,9 +13,10 @@ BOMB = 6
 draggingTrav = False
 draggingDest = False
 draggingBomb = False
-painting = True
+painting = False
 paint = WALL
 keyDown = False
+dropdownIsOpen = False
 
 travelerCoords = (1,1)
 
@@ -89,7 +87,7 @@ class Cell(object):
             if self.pressed == False:
                 self.pressed = True
                 
-                if self.rect.collidepoint(mouse_pos):
+                if self.rect.collidepoint(mouse_pos) and not dropdownIsOpen:
                     if self.collide == False: # do these only first collision
                         self.collide = True
                         
@@ -142,7 +140,7 @@ class Cell(object):
         global painting
         mouse_pos = pygame.mouse.get_pos()
 
-        if self.rect.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0] and not painting:
+        if self.rect.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0] and not (painting or dropdownIsOpen):
             if self.status == TRAVELER and not (draggingTrav or draggingDest or draggingBomb):
                 draggingTrav = True
 
@@ -218,6 +216,7 @@ class Grid(object):
 def pathfindingScreen(screen,background):
     running = True
     clock = pygame.time.Clock()
+    global dropdownIsOpen
 
     grid = Grid(50,20,30,210,350, screen)
     grid.grid[1][1].change_status(TRAVELER)
@@ -230,20 +229,24 @@ def pathfindingScreen(screen,background):
 
     backward = Button('',backwardImg.get_rect().width,backwardImg.get_rect().height,(200,120),5,screen,gui_font,backwardImg)
     start = Button('START THE VISUAL!',300,90,(810,210),5,screen,gui_font)
-    algorithms  = Button('algorithms',300,40,(500,210),5,screen,gui_font)
-    mazesAndPatterns = Button('mazesAndPatterns',300,40,(500,260),5,screen,gui_font)
-    addBomb = Button('addBomb',300,40,(190,210),5,screen,gui_font)
-    clearGrid = Button('clearGrid',300,40,(1120,210),5,screen,gui_font)
-    clearWalls = Button('clearWalls',300,40,(1430,210),5,screen,gui_font)
-    clearPath = Button('clearPath',300,40,(1430,260),5,screen,gui_font)
-    speed = Button('speed',300,40,(190,260),5,screen,gui_font)
-    theme = Button('theme',300,40,(1120,260),5,screen,gui_font)
+    algorithms  = Button("Dijktra's Algorithm",300,40,(1430,260),5,screen,gui_font)
+    mazesAndPatterns = Button('Mazes And Patterns',300,40,(500,260),5,screen,gui_font)
+    addBomb = Button('Add Bomb',300,40,(190,210),5,screen,gui_font)
+    clearGrid = Button('Clear Grid',300,40,(1120,210),5,screen,gui_font)
+    clearWalls = Button('Clear Walls',300,40,(1430,210),5,screen,gui_font)
+    clearPath = Button('Clear Path',300,40,(500,210),5,screen,gui_font)
+    speed = Button('Speed: Fast',300,40,(190,260),5,screen,gui_font)
+    theme = Button('theme 1',300,40,(1120,260),5,screen,gui_font)
+
+    algoToUse = "Dijktra's Algorithm"
+    speedValue = "Fast"
+    themeToUse = "theme 1"
+    mazesAndPatternsToUse = None
 
     algorithmsMenu = False
     mazesAndPatternsMenu = False
     speedMenu = False
     themeMenu = False
-
     bombAdded = False
 
     text_surf = title_font.render("Pathfinding Visualizer",True,'#FFFFFF')
@@ -253,12 +256,20 @@ def pathfindingScreen(screen,background):
     done = False
     current = travelerCoords
     searchQueue = [current]
+    
+
+    #algorithms dropdown menu items
+    
+    algorithmsDropDown = dropdownmenu(["Dijktra's Algorithm",'A* Search','Greedy Best-first Search','Swarm Algorithm','Convergent Swarm Algorithm','Bidirectional Swarm Algorithm','Breadth-first Search','Depth-first Search'],(1410,310),screen,40,300,gui_font)
+    speedDropDown = dropdownmenu(["Slow","Average","Fast"],(190,310), screen,40,300,gui_font)
+    themeDropDown = dropdownmenu(["theme 1","theme 2","theme 3"],(1120,310), screen,40,300,gui_font)
+    mazesAndPatternsDropDown = dropdownmenu(["Recursive Division","Recursive Division (vertival skew)","Recursive Division (horizontal skew)","Basic Random Maze","Basic weigth Maze","Simple Stair Pattern"],(500,310), screen,40,360,gui_font)
 
     isVisualStarted = False
     while running:
         msElapsed = clock.tick(60)
         
-
+        dropdownIsOpen = algorithmsMenu or mazesAndPatternsMenu or speedMenu or themeMenu
             
 
         for event in pygame.event.get():
@@ -284,9 +295,26 @@ def pathfindingScreen(screen,background):
             isVisualStarted = True
 
         if algorithms.draw():
-            pass
+            algorithmsMenu = not algorithmsMenu
+            mazesAndPatternsMenu = False
+            speedMenu = False
+            themeMenu = False
         if mazesAndPatterns.draw():
-            pass
+            mazesAndPatternsMenu = not mazesAndPatternsMenu
+            algorithmsMenu = False
+            speedMenu = False
+            themeMenu = False
+        if speed.draw():
+            speedMenu = not speedMenu
+            algorithmsMenu = False
+            mazesAndPatternsMenu = False
+            themeMenu = False
+        if theme.draw():
+            themeMenu = not themeMenu
+            algorithmsMenu = False
+            mazesAndPatternsMenu = False
+            speedMenu = False
+
         if addBomb.draw():
             if not bombAdded:
                 for i in range(grid.xCount):
@@ -323,13 +351,37 @@ def pathfindingScreen(screen,background):
                         grid.grid[i][j].change_status(EMPTY)
             done = False
             isVisualStarted = False
-        if speed.draw():
-            pass
-        if theme.draw():
-            pass
+        
         grid.Draw()
 
-        select = 1
+        if algorithmsMenu:
+            algoToUsetemp = algorithmsDropDown.Draw()
+            if algoToUsetemp != -1:
+                algorithms.text = algoToUsetemp
+                algoToUse = algoToUsetemp
+                algorithmsMenu = False
+                
+            
+        if mazesAndPatternsMenu:
+            mazesAndPatternsToUsetemp = mazesAndPatternsDropDown.Draw()
+            if mazesAndPatternsToUsetemp != -1:
+                mazesAndPatternsToUse = mazesAndPatternsToUsetemp
+                mazesAndPatternsMenu = False
+                #TODO
+        if speedMenu:
+            speedValuetemp = speedDropDown.Draw()
+            if speedValuetemp != -1:
+                speed.text = "Speed: " + speedValuetemp
+                speedValue = speedValuetemp
+                speedMenu = False
+            
+        if themeMenu:
+            themeToUsetemp = themeDropDown.Draw()
+            if themeToUsetemp != -1:
+                theme.text = themeToUsetemp
+                themeToUse = themeToUsetemp
+                themeMenu = False
+
         
         if isVisualStarted:
             
