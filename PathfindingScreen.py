@@ -339,7 +339,7 @@ def pathfindingScreen(screen,background):
                 coordinates = [[0,1],[0,-1],[1,0],[-1,0]]
                     
                 for coordinate in coordinates:
-                    if current[0] < 49 and current[1] < 19 and current[0] > 0 and current[1] > 0:
+                    if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 20 and current[0] + coordinate[0]< 50 :
                         if grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == EMPTY :
                             grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRIED)
                             pygame.display.update()
