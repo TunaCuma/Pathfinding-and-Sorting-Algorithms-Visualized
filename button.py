@@ -14,12 +14,12 @@ class Button:
 
         # top rectangle 
         self.top_rect = pygame.Rect(pos,(width,height))
-        self.top_color = '#475F77'
+        self.top_color = '#F7F6F2'
         # bottom rectangle 
         self.bottom_rect = pygame.Rect(pos,(width,height))
-        self.bottom_color = '#354B5E'
+        self.bottom_color = '#2C3639'
         #text
-        self.text_surf = gui_font.render(text,True,'#FFFFFF')
+        self.text_surf = gui_font.render(text,True,'#000000')
         self.text_rect = self.text_surf.get_rect(center = self.top_rect.center)
 
     def draw(self):
@@ -42,7 +42,7 @@ class Button:
         action = False
         mouse_pos = pygame.mouse.get_pos()
         if self.top_rect.collidepoint(mouse_pos):
-            self.top_color = '#D74B4B'
+            self.top_color = '#FFFFFF'
             if pygame.mouse.get_pressed()[0]:
                 self.dynamic_elecation = 0
                 self.pressed = True
@@ -53,5 +53,5 @@ class Button:
                     self.pressed = False
         else:
             self.dynamic_elecation = self.elevation
-            self.top_color = '#475F77'
+            self.top_color = '#F7F6F2'
         return action
