@@ -229,7 +229,7 @@ def pathfindingScreen(screen,background):
 
     backward = Button('',backwardImg.get_rect().width,backwardImg.get_rect().height,(200,120),5,screen,gui_font,backwardImg)
     start = Button('START THE VISUAL!',300,90,(810,210),5,screen,gui_font)
-    algorithms  = Button("Dijktra's Algorithm",300,40,(1430,260),5,screen,gui_font)
+    algorithms  = Button('Breadth-first Search',300,40,(1430,260),5,screen,gui_font)
     mazesAndPatterns = Button('Mazes And Patterns',300,40,(500,260),5,screen,gui_font)
     addBomb = Button('Add Bomb',300,40,(190,210),5,screen,gui_font)
     clearGrid = Button('Clear Grid',300,40,(1120,210),5,screen,gui_font)
@@ -238,7 +238,7 @@ def pathfindingScreen(screen,background):
     speed = Button('Speed: Fast',300,40,(190,260),5,screen,gui_font)
     theme = Button('theme 1',300,40,(1120,260),5,screen,gui_font)
 
-    algoToUse = "Dijktra's Algorithm"
+    algoToUse = 'Breadth-first Search'
     speedValue = "Fast"
     themeToUse = "theme 1"
     mazesAndPatternsToUse = None
@@ -260,7 +260,7 @@ def pathfindingScreen(screen,background):
 
     #algorithms dropdown menu items
     
-    algorithmsDropDown = dropdownmenu(["Dijktra's Algorithm",'A* Search','Greedy Best-first Search','Swarm Algorithm','Convergent Swarm Algorithm','Bidirectional Swarm Algorithm','Breadth-first Search','Depth-first Search'],(1410,310),screen,40,300,gui_font)
+    algorithmsDropDown = dropdownmenu(['Breadth-first Search','Depth-first Search','A* Search','Greedy Best-first Search','Swarm Algorithm','Convergent Swarm Algorithm','Bidirectional Swarm Algorithm',"Dijktra's Algorithm"],(1410,310),screen,40,300,gui_font)
     speedDropDown = dropdownmenu(["Slow","Average","Fast"],(190,310), screen,40,300,gui_font)
     themeDropDown = dropdownmenu(["theme 1","theme 2","theme 3"],(1120,310), screen,40,300,gui_font)
     mazesAndPatternsDropDown = dropdownmenu(["Recursive Division","Recursive Division (vertival skew)","Recursive Division (horizontal skew)","Basic Random Maze","Basic weigth Maze","Simple Stair Pattern"],(500,310), screen,40,360,gui_font)
@@ -270,7 +270,7 @@ def pathfindingScreen(screen,background):
         msElapsed = clock.tick(60)
         
         dropdownIsOpen = algorithmsMenu or mazesAndPatternsMenu or speedMenu or themeMenu
-            
+        
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -382,7 +382,12 @@ def pathfindingScreen(screen,background):
                 themeToUse = themeToUsetemp
                 themeMenu = False
 
-        
+        select = 0
+        if algorithms.text == 'Breadth-first Search':
+            select = 0
+        elif algorithms.text == 'Depth-first Search':
+            select = 1
+
         if isVisualStarted:
             
             if select == 0:
@@ -410,8 +415,8 @@ def breadthFirstSearchOneStep(grid, searchQueue):
                     grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRIED)
                     pygame.display.update()
                 elif grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == DESTINATION :
-                    return True
-    return False
+                    return False
+    return True
 
 def depthFirstSearchOneStep(grid, stack):
     if stack:
@@ -426,7 +431,7 @@ def depthFirstSearchOneStep(grid, stack):
                     stack.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
                     return True
                 elif grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == DESTINATION :
-                    return True
+                    return False
     return False
 
 
