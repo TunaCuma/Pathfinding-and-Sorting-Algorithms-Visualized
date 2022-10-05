@@ -1,7 +1,7 @@
-from turtle import back
 import pygame
 from button import Button
 from dropdownmenu import dropdownmenu
+from theme import Theme
 
 EMPTY = 0
 WALL = 1
@@ -10,6 +10,7 @@ TRIED = 3
 TRAVELER = 4
 DESTINATION = 5
 BOMB = 6
+WEIGHTEDNOD = 7
 
 draggingTrav = False
 draggingDest = False
@@ -181,6 +182,8 @@ class Cell(object):
             self.change_color((255,255,0,200))
         elif self.status == TRIED:
             self.change_color((0,255,0,200))
+        elif self.status == WEIGHTEDNOD:
+            self.change_color((0,0,255,200))
 
 
 
@@ -222,12 +225,8 @@ class Grid(object):
             for j in range(self.yCount):
                 self.grid[i][j].change_color(self.color)
 
-class Theme:
-    def __init__(self, background, gridColor):
-        self.background = background
-        self.gridColor = gridColor
 
-def pathfindingScreen(screen,background):
+def pathfindingScreen(screen):
     running = True
     clock = pygame.time.Clock()
     global dropdownIsOpen

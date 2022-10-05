@@ -46,11 +46,11 @@ while running:
     
 
     if button1.draw():
-        if not PathfindingScreen.pathfindingScreen(screen,background):
+        if not PathfindingScreen.pathfindingScreen(screen):
             running = False
     
     if button2.draw():
-        if not SortingScreen.sortingScreen(screen,background):
+        if not SortingScreen.sortingScreen(screen):
             running = False
     
     pygame.display.update()
