@@ -16,20 +16,25 @@ icon = pygame.image.load('assets/icon.png')
 pygame.display.set_icon(icon)
 
 # Background
-background = pygame.image.load('assets/background.png')
+background = pygame.image.load('assets/background3.png')
 
 
 
 gui_font = pygame.font.Font(None,30)
+title_font = pygame.font.Font(None,70)
+title_font2 = pygame.font.Font(None,60)
+text_surf = title_font.render("Pathfinding and Sorting Algorithms Visualizer",True,'#FFFFFF')
+text_surf2 = title_font2.render("By Emre Akgül and Tuna Cuma",True,'#FFFFFF')
 
-button1 = Button('Pathfinding Algorithms',300,40,(400,520),5,screen,gui_font)
-button2 = Button('Sorting Algorithms',300,40,(1920 - 700,520),5,screen,gui_font)
+button1 = Button('Pathfinding Algorithms',300,40,(420,600),5,screen,gui_font)
+button2 = Button('Sorting Algorithms',300,40,(1920 - 720,600),5,screen,gui_font)
 exitbutton = Button('Exit',200,40,(860,820),5,screen,gui_font)
 
 
 # Game Loop
 running = True
 while running:
+
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -39,6 +44,10 @@ while running:
     screen.fill((0, 0, 0))
     # Background Image
     screen.blit(background, (0, 0))
+
+    screen.blit(text_surf,(410,340,400,40))
+    screen.blit(text_surf2,(650,440,400,40))
+
 
     if exitbutton.draw():
         running = False

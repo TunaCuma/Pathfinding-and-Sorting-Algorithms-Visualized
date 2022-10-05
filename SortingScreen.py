@@ -97,7 +97,7 @@ def sortingScreen(screen):
 
     shuffle = Button('Shuffle',300,40,(1120,260),5,screen,gui_font)
     theme = Button('theme 1',300,40,(1430,260),5,screen,gui_font)
-    algo = Button('Algorithm: ',300,40,(810,260),5,screen,gui_font)
+    algo = Button("Merge Sort",300,40,(810,260),5,screen,gui_font)
     start = Button('Start',300,40,(810,210),5,screen,gui_font)
 
     shuffleIndex = 500
@@ -109,11 +109,14 @@ def sortingScreen(screen):
     theme3 = Theme(background3, (180,188,188))
 
     themeDropDown = dropdownmenu(["theme 1","theme 2","theme 3"],(1430,310), screen,40,300,gui_font)
+    algoDropDown = dropdownmenu(["Merge Sort","Quick Sort","Heap Sort", "Bubble Sort"],(810,310), screen,40,300,gui_font)
 
     themeToUse = "theme 1"
+    algoToUse = "Merge Sort"
     backgroundToUse = background2
 
     themeMenu = False
+    algoMenu = False
     
     menuSurface = pygame.Surface((1860,325), pygame.SRCALPHA)
 
@@ -155,6 +158,11 @@ def sortingScreen(screen):
 
         if theme.draw():
             themeMenu = not themeMenu
+            algoMenu = False
+        
+        if algo.draw():
+            algoMenu = not algoMenu
+            themeMenu = False
 
 
 
@@ -199,5 +207,11 @@ def sortingScreen(screen):
                     columnColor =theme3.Color
                     backgroundToUse = theme3.background
                 themeMenu = False
+        if algoMenu:
+            algoToUsetemp = algoDropDown.Draw()
+            if algoToUsetemp != -1:
+                algo.text = algoToUsetemp
+                algoToUse = algoToUsetemp
+                algoMenu = False
         pygame.display.update()
 

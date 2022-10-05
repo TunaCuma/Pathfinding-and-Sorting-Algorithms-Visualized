@@ -7,10 +7,11 @@ EMPTY = 0
 WALL = 1
 RIGTH_PATH = 2
 TRIED = 3
-TRAVELER = 4
-DESTINATION = 5
-BOMB = 6
-WEIGHTEDNOD = 7
+TRIED2 = 4
+TRAVELER = 5
+DESTINATION = 6
+BOMB = 7
+WEIGHTEDNOD = 8
 
 draggingTrav = False
 draggingDest = False
@@ -45,7 +46,7 @@ class Cell(object):
         self.gridColor = (0, 0, 0)
 
     def change_color(self, color):
-        if self.status>3:
+        if self.status>4:
             self.currentRect = 150
         else:
             self.currentRect = 0
@@ -63,12 +64,12 @@ class Cell(object):
         global paint
         self.win.blit(self.subsurface, self.pos)
         
-        if self.status>3:
+        if self.status>4:
             pygame.draw.rect(self.win, (255, 255, 255), self.rect, 1)
         else:
             pygame.draw.rect(self.win, self.gridColor, self.rect, 1)
 
-        if self.status>3:
+        if self.status>4:
             if self.check_drag():
                 self.change_status(self.oldStatus)
 
@@ -182,6 +183,8 @@ class Cell(object):
             self.change_color((255,255,0,200))
         elif self.status == TRIED:
             self.change_color((0,255,0,200))
+        elif self.status == TRIED2:
+            self.change_color((0,200,55,200))
         elif self.status == WEIGHTEDNOD:
             self.change_color((0,0,255,200))
 
@@ -244,6 +247,7 @@ def pathfindingScreen(screen):
 
     gui_font = pygame.font.Font(None,30)
     title_font = pygame.font.Font(None,50)
+    text_surf = title_font.render("Sorting Visualizer",True,'#FFFFFF')
 
     backward = Button('',backwardImg.get_rect().width,backwardImg.get_rect().height,(200,120),5,screen,gui_font,backwardImg)
     start = Button('START THE VISUAL!',300,90,(810,210),5,screen,gui_font)
