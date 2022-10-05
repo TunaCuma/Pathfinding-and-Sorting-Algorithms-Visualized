@@ -1,4 +1,4 @@
 class Theme:
-    def __init__(self, background, gridColor):
+    def __init__(self, background, Color):
         self.background = background
-        self.gridColor = gridColor
+        self.Color = Color

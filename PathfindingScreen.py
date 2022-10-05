@@ -409,13 +409,13 @@ def pathfindingScreen(screen):
                 theme.text = themeToUsetemp
                 themeToUse = themeToUsetemp
                 if themeToUse == "theme 1":
-                    grid.change_gridColor(theme1.gridColor)
+                    grid.change_gridColor(theme1.Color)
                     backgroundToUse = theme1.background
                 if themeToUse == "theme 2":
-                    grid.change_gridColor(theme2.gridColor)
+                    grid.change_gridColor(theme2.Color)
                     backgroundToUse = theme2.background
                 if themeToUse == "theme 3":
-                    grid.change_gridColor(theme3.gridColor)
+                    grid.change_gridColor(theme3.Color)
                     backgroundToUse = theme3.background
 
                 themeMenu = False

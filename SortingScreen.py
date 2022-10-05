@@ -190,13 +190,13 @@ def sortingScreen(screen):
                 theme.text = themeToUsetemp
                 themeToUse = themeToUsetemp
                 if themeToUse == "theme 1":
-                    columnColor = theme1.gridColor
+                    columnColor = theme1.Color
                     backgroundToUse = theme1.background
                 if themeToUse == "theme 2":
-                    columnColor =theme2.gridColor
+                    columnColor =theme2.Color
                     backgroundToUse = theme2.background
                 if themeToUse == "theme 3":
-                    columnColor =theme3.gridColor
+                    columnColor =theme3.Color
                     backgroundToUse = theme3.background
                 themeMenu = False
         pygame.display.update()
