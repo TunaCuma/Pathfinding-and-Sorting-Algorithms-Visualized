@@ -1,3 +1,4 @@
+from turtle import back
 import pygame
 from button import Button
 from dropdownmenu import dropdownmenu
@@ -40,6 +41,7 @@ class Cell(object):
         self.speed = 5
         self.subsurface = pygame.Surface((self.size,self.size), pygame.SRCALPHA)
         self.subsurface.fill(self.color)
+        self.gridColor = (0, 0, 0)
 
     def change_color(self, color):
         if self.status>3:
@@ -51,6 +53,10 @@ class Cell(object):
 
         
         #pygame.draw.rect(self.win, (0, 0, 0), self.rect, 1)
+    
+    def change_gridColor(self, gridColor):
+        self.gridColor = gridColor
+
 
     def Draw(self):
         global paint
@@ -59,7 +65,7 @@ class Cell(object):
         if self.status>3:
             pygame.draw.rect(self.win, (255, 255, 255), self.rect, 1)
         else:
-            pygame.draw.rect(self.win, (0, 0, 0), self.rect, 1)
+            pygame.draw.rect(self.win, self.gridColor, self.rect, 1)
 
         if self.status>3:
             if self.check_drag():
@@ -206,12 +212,20 @@ class Grid(object):
     def change_color(self, posx, posy, color):
         self.grid[posy][posx].change_color(color)
     
-    
+    def change_gridColor(self, gridColor):
+        for i in range(self.xCount):
+            for j in range(self.yCount):
+                self.grid[i][j].change_gridColor(gridColor)
 
     def clean(self):
         for i in range(self.xCount):
             for j in range(self.yCount):
                 self.grid[i][j].change_color(self.color)
+
+class Theme:
+    def __init__(self, background, gridColor):
+        self.background = background
+        self.gridColor = gridColor
 
 def pathfindingScreen(screen,background):
     running = True
@@ -223,7 +237,12 @@ def pathfindingScreen(screen,background):
     grid.grid[0][0].change_status(DESTINATION)
 
     backwardImg = pygame.image.load('assets/backwards.png')
+    background4 = pygame.image.load('assets/background4.png')
     background2 = pygame.image.load('assets/background2.png')
+    background3 = pygame.image.load('assets/background3.png')
+
+    backgroundToUse = background2
+
     gui_font = pygame.font.Font(None,30)
     title_font = pygame.font.Font(None,50)
 
@@ -251,12 +270,17 @@ def pathfindingScreen(screen,background):
 
     text_surf = title_font.render("Pathfinding Visualizer",True,'#FFFFFF')
     menuSurface = pygame.Surface((1860,325), pygame.SRCALPHA)
+    theme1 = Theme(background2, (0,0,0))
+    theme2 = Theme(background4, (30,30,160))
+    theme3 = Theme(background3, (180,188,188))
 
     
     done = False
     current = travelerCoords
     searchQueue = [current]
     
+    waitTillOne = 0
+    speedValue = 1
 
     #algorithms dropdown menu items
     
@@ -280,7 +304,7 @@ def pathfindingScreen(screen,background):
         # RGB = Red, Green, Blue
         screen.fill((0, 0, 0))
         # Background Image
-        screen.blit(background2, (0, 0))
+        screen.blit(backgroundToUse, (0, 0))
         pygame.draw.rect(menuSurface,(180,188,188,150),(180,0,1860,325))
         pygame.draw.rect(menuSurface,(250,245,245,190),(180,0,1860,325),2)
         screen.blit(menuSurface, (0,0))
@@ -372,7 +396,12 @@ def pathfindingScreen(screen,background):
             speedValuetemp = speedDropDown.Draw()
             if speedValuetemp != -1:
                 speed.text = "Speed: " + speedValuetemp
-                speedValue = speedValuetemp
+                if speedValuetemp == "Fast":
+                    speedValue = 1
+                if speedValuetemp == "Average":
+                    speedValue = 0.5
+                if speedValuetemp == "Slow":
+                    speedValue = 0.25
                 speedMenu = False
             
         if themeMenu:
@@ -380,20 +409,32 @@ def pathfindingScreen(screen,background):
             if themeToUsetemp != -1:
                 theme.text = themeToUsetemp
                 themeToUse = themeToUsetemp
+                if themeToUse == "theme 1":
+                    grid.change_gridColor(theme1.gridColor)
+                    backgroundToUse = theme1.background
+                if themeToUse == "theme 2":
+                    grid.change_gridColor(theme2.gridColor)
+                    backgroundToUse = theme2.background
+                if themeToUse == "theme 3":
+                    grid.change_gridColor(theme3.gridColor)
+                    backgroundToUse = theme3.background
+
                 themeMenu = False
 
         select = 0
-        if algorithms.text == 'Breadth-first Search':
+        if algoToUse == 'Breadth-first Search':
             select = 0
-        elif algorithms.text == 'Depth-first Search':
+        elif algoToUse == 'Depth-first Search':
             select = 1
 
         if isVisualStarted:
-            
-            if select == 0:
-                isVisualStarted = breadthFirstSearchOneStep(grid, searchQueue)
-            elif select == 1:
-                isVisualStarted = depthFirstSearchOneStep(grid, searchQueue) 
+            waitTillOne += speedValue
+            if waitTillOne>= 1:
+                waitTillOne = 0
+                if select == 0:
+                    isVisualStarted = breadthFirstSearchOneStep(grid, searchQueue)
+                elif select == 1:
+                    isVisualStarted = depthFirstSearchOneStep(grid, searchQueue) 
 
 
         pygame.display.update()
@@ -433,7 +474,3 @@ def depthFirstSearchOneStep(grid, stack):
                 elif grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == DESTINATION :
                     return False
     return False
-
-
-
-        
