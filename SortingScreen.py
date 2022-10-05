@@ -69,6 +69,7 @@ class Column:
         self.color = (255, 255, 255)
     
     def replace(self, Column):
+        self.changeColor()
         tempx = self.x
         tempy = self.y
         self.x = Column.x
@@ -173,7 +174,6 @@ def sortingScreen(screen):
             shuffleIndex = 0
         if shuffleIndex < columnAmount:
             otherColumnIndex = random.randint(0,columnAmount-1)
-            columns[shuffleIndex].changeColor()
             columns[shuffleIndex].replace(columns[otherColumnIndex])
             temp =columns[shuffleIndex]
             columns[shuffleIndex] = columns[otherColumnIndex]
