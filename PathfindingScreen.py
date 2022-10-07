@@ -20,8 +20,12 @@ painting = False
 paint = WALL
 keyDown = False
 dropdownIsOpen = False
-
+bombAdded = False
+bombFound = False
 travelerCoords = (1,1)
+current = travelerCoords
+searchQueue = [current]
+
 
 class Cell(object):
     def __init__(self, size, color, screen, x, y, i, j):
@@ -184,7 +188,7 @@ class Cell(object):
         elif self.status == TRIED:
             self.change_color((0,255,0,200))
         elif self.status == TRIED2:
-            self.change_color((0,200,55,200))
+            self.change_color((0,150,85,200))
         elif self.status == WEIGHTEDNOD:
             self.change_color((0,0,255,200))
 
@@ -233,6 +237,9 @@ def pathfindingScreen(screen):
     running = True
     clock = pygame.time.Clock()
     global dropdownIsOpen
+    global bombAdded
+    global bombFound
+    global searchQueue
 
     grid = Grid(50,20,30,210,350, screen)
     grid.grid[1][1].change_status(TRAVELER)
@@ -269,7 +276,7 @@ def pathfindingScreen(screen):
     mazesAndPatternsMenu = False
     speedMenu = False
     themeMenu = False
-    bombAdded = False
+    
 
     text_surf = title_font.render("Pathfinding Visualizer",True,'#FFFFFF')
     menuSurface = pygame.Surface((1860,325), pygame.SRCALPHA)
@@ -279,8 +286,7 @@ def pathfindingScreen(screen):
 
     
     done = False
-    current = travelerCoords
-    searchQueue = [current]
+    
     
     waitTillOne = 0
     speedValue = 1
@@ -349,6 +355,7 @@ def pathfindingScreen(screen):
                         if grid.grid[i][j].status == EMPTY and not bombAdded:
                             grid.grid[i][j].change_status(BOMB)
                             bombAdded = True
+                            bombFound = False
                             break
             else:
                 for i in range(grid.xCount):
@@ -374,7 +381,7 @@ def pathfindingScreen(screen):
         if clearPath.draw():
             for i in range(grid.xCount):
                 for j in range(grid.yCount):
-                    if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == RIGTH_PATH:
+                    if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == RIGTH_PATH or grid.grid[i][j].status == TRIED2:
                         grid.grid[i][j].change_status(EMPTY)
             done = False
             isVisualStarted = False
@@ -435,7 +442,7 @@ def pathfindingScreen(screen):
             if waitTillOne>= 1:
                 waitTillOne = 0
                 if select == 0:
-                    isVisualStarted = breadthFirstSearchOneStep(grid, searchQueue)
+                    isVisualStarted = breadthFirstSearchOneStep(grid)
                 elif select == 1:
                     isVisualStarted = depthFirstSearchOneStep(grid, searchQueue) 
 
@@ -443,7 +450,8 @@ def pathfindingScreen(screen):
         pygame.display.update()
 
 
-def breadthFirstSearchOneStep(grid, searchQueue):
+def breadthFirstSearchOneStep(grid):
+    global bombFound,bombAdded,searchQueue
     if searchQueue:
         current = searchQueue.pop(0) 
         
@@ -451,8 +459,8 @@ def breadthFirstSearchOneStep(grid, searchQueue):
         coordinates = [[0,1],[0,-1],[1,0],[-1,0]]
             
         for coordinate in coordinates:
-            if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 20 and current[0] + coordinate[0]< 50 :
-                if grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == EMPTY :
+            if not (bombAdded and not bombFound) and current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 20 and current[0] + coordinate[0]< 50:
+                if grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == EMPTY or grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == TRIED2:
                     grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRIED)
                     pygame.display.update()
                     searchQueue.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
@@ -460,6 +468,18 @@ def breadthFirstSearchOneStep(grid, searchQueue):
                     pygame.display.update()
                 elif grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == DESTINATION :
                     return False
+            elif (bombAdded and not bombFound) and current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 20 and current[0] + coordinate[0]< 50:
+                if grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == EMPTY :
+                    grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRIED2)
+                    pygame.display.update()
+                    searchQueue.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
+                    grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRIED2)
+                    pygame.display.update()
+                elif grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == BOMB :
+                    current = (current[0] + coordinate[0],current[1] + coordinate[1])
+                    searchQueue = [current]
+                    bombFound = True
+                    return True
     return True
 
 def depthFirstSearchOneStep(grid, stack):
