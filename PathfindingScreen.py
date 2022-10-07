@@ -234,7 +234,7 @@ def pathfindingScreen(screen):
     clock = pygame.time.Clock()
     global dropdownIsOpen
 
-    grid = Grid(50,20,30,210,350, screen)
+    grid = Grid(51,21,30,195,340, screen)
     grid.grid[1][1].change_status(TRAVELER)
     grid.grid[0][0].change_status(DESTINATION)
 
