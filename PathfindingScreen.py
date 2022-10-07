@@ -325,6 +325,7 @@ def pathfindingScreen(screen):
         if start.draw() and not isVisualStarted:
             current = travelerCoords
             searchQueue = [current]
+            bombFound = False
             isVisualStarted = True
 
         if algorithms.draw():
@@ -444,7 +445,7 @@ def pathfindingScreen(screen):
                 if select == 0:
                     isVisualStarted = breadthFirstSearchOneStep(grid)
                 elif select == 1:
-                    isVisualStarted = depthFirstSearchOneStep(grid, searchQueue) 
+                    isVisualStarted = depthFirstSearchOneStep(grid) 
 
 
         pygame.display.update()
@@ -482,18 +483,29 @@ def breadthFirstSearchOneStep(grid):
                     return True
     return True
 
-def depthFirstSearchOneStep(grid, stack):
-    if stack:
-        current = stack.pop(-1)
+def depthFirstSearchOneStep(grid):
+    global bombFound,bombAdded,searchQueue
+    if searchQueue:
+        current = searchQueue.pop(-1)
 
         coordinates = [[0,1],[0,-1],[1,0],[-1,0]]
             
         for coordinate in coordinates:
-            if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 20 and current[0] + coordinate[0]< 50 :
-                if grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == EMPTY :
+            if not (bombAdded and not bombFound) and current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 20 and current[0] + coordinate[0]< 50 :
+                if grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == EMPTY or grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == TRIED2:
                     grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRIED)
-                    stack.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
+                    searchQueue.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
                     return True
                 elif grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == DESTINATION :
                     return False
+            elif (bombAdded and not bombFound) and current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 20 and current[0] + coordinate[0]< 50 :
+                if grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == EMPTY :
+                    grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRIED2)
+                    searchQueue.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
+                    return True
+                elif grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == BOMB :
+                    current = (current[0] + coordinate[0],current[1] + coordinate[1])
+                    searchQueue = [current]
+                    bombFound = True
+                    return True
     return False
