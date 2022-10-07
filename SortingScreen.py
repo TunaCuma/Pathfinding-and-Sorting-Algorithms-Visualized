@@ -1,3 +1,4 @@
+from mimetypes import init
 import random
 import pygame
 from dropdownmenu import dropdownmenu
@@ -5,10 +6,11 @@ from dropdownmenu import dropdownmenu
 from theme import Theme
 
 dragging = False
+columns = []
 
 from button import Button
 class SliderBall:
-    def __init__(self,x,y,width,screen,color) -> None:
+    def __init__(self,x,y,width,screen,color, rect) -> None:
         self.x = x
         self.y = y
         self.startPos = (x,y)
@@ -17,6 +19,7 @@ class SliderBall:
         self.color = color
         self.dragging = False
         self.rect = pygame.Rect((self.x-15,self.y-15),(30,30))
+        self.parentRect = pygame.Rect(rect)
     def Draw(self):
         pygame.draw.circle(self.screen,(180,188,188,150),(self.x,self.y),15)
         pygame.draw.circle(self.screen,self.color,(self.x,self.y),15,2)
@@ -29,7 +32,7 @@ class SliderBall:
         global dragging
         mouse_pos = pygame.mouse.get_pos()
         if pygame.mouse.get_pressed()[0]:
-            if self.rect.collidepoint(mouse_pos) and not dragging:
+            if self.parentRect.collidepoint(mouse_pos) and not dragging:
                 dragging = True
             elif dragging and self.startPos[0]<mouse_pos[0]<(self.startPos[0] + self.width + 1):
                 self.x = mouse_pos[0]
@@ -44,7 +47,7 @@ class Slider:
         self.screen = screen
         self.color = color
         self.value = min
-        self.sliderBall = SliderBall(rect[0],rect[1]+(rect[3]/2),rect[2],self.screen,self.color)
+        self.sliderBall = SliderBall(rect[0],rect[1]+(rect[3]/2),rect[2],self.screen,self.color, self.rect)
     def Draw(self):
         pygame.draw.rect(self.screen,self.color,self.rect,2,border_radius = 12)
         self.value = self.min + (self.max-self.min)*(self.sliderBall.Draw())
@@ -69,7 +72,7 @@ class Column:
         self.color = (255, 255, 255)
     
     def replace(self, Column):
-        self.changeColor()
+        self.changeColor((255,0,0))
         tempx = self.x
         tempy = self.y
         self.x = Column.x
@@ -77,16 +80,19 @@ class Column:
         self.y = Column.y
         Column.y = tempy
     
-    def changeColor(self):
-        self.color = (255,0,0)
+    def changeColor(self, color):
+        self.color = color
         self.paintInside = True
 
 
 
 def sortingScreen(screen):
+    global columns
     running = True
     initDone = False
-    
+    finish = False
+    finIndex = 0
+
     backwardImg = pygame.image.load('assets/backwards.png')
     background4 = pygame.image.load('assets/background4.png')
     background2 = pygame.image.load('assets/background2.png')
@@ -117,7 +123,13 @@ def sortingScreen(screen):
 
     themeMenu = False
     algoMenu = False
-    
+    quickSortStarted = False
+    mergeSortStarted = False
+    heapSortStarted = False
+    bubbleSortStarted = False
+
+    isVisualStarted = False
+
     menuSurface = pygame.Surface((1860,325), pygame.SRCALPHA)
 
 
@@ -182,15 +194,10 @@ def sortingScreen(screen):
             shuffleIndex = 0
         if shuffleIndex < columnAmount:
             otherColumnIndex = random.randint(0,columnAmount-1)
-            columns[shuffleIndex].replace(columns[otherColumnIndex])
-            temp =columns[shuffleIndex]
-            columns[shuffleIndex] = columns[otherColumnIndex]
-            columns[otherColumnIndex] = temp
+            replaceColumns(columns,shuffleIndex,otherColumnIndex)
             shuffleIndex +=1
         if start.draw() and initDone:
-            pass
-        if algo.draw() and initDone:
-            pass
+            isVisualStarted = True
 
         if themeMenu:
             themeToUsetemp = themeDropDown.Draw()
@@ -213,5 +220,208 @@ def sortingScreen(screen):
                 algo.text = algoToUsetemp
                 algoToUse = algoToUsetemp
                 algoMenu = False
+        
+        if isVisualStarted and initDone:
+            if algoToUse == "Quick Sort":
+                a = quick_sort(columns,0,columnAmount-1,columnColor)
+                quickSortStarted = True
+                isVisualStarted = False
+            if algoToUse == "Merge Sort":
+                mergeSort(columns, 0)
+                mergeSortStarted = True
+                isVisualStarted = False
+            if algoToUse == "Heap Sort":
+                c = heapSort(columns)
+                heapSortStarted = True
+                isVisualStarted = False
+            if algoToUse == "Bubble Sort":
+                d = bubbleSort(columns)
+                bubbleSortStarted = True
+                isVisualStarted = False
+        
+
+        if quickSortStarted:
+            try:
+                next(a)
+            except StopIteration:
+                finish = True
+                quickSortStarted = False
+
+        if mergeSortStarted and False:
+            try:
+                next(b)
+            except StopIteration:
+                finish = True
+                mergeSortStarted = False
+
+        if heapSortStarted:
+            try:
+                next(c)
+            except StopIteration:
+                finish = True
+                heapSortStarted = False
+        
+        if bubbleSortStarted:
+            try:
+                next(d)
+            except StopIteration:
+                finish = True
+                bubbleSortStarted = False
+
+        if finish:
+            if finIndex < columnAmount +2:
+                initDone = False
+                if finIndex < columnAmount:
+                    columns[finIndex].changeColor((0,255,0))
+                if 1<finIndex < columnAmount+1:
+                    columns[finIndex-1].changeColor((0,255,0))
+                if 2<finIndex:
+                    columns[finIndex-2].changeColor((0,255,0))
+                finIndex+= 1
+            else:
+                initDone = True
+                finIndex = 0
+                finish = False
+
         pygame.display.update()
 
+
+
+def replaceColumns(columns,firstIndex,secondIndex):
+    columns[firstIndex].replace(columns[secondIndex])
+    replaceIndex(columns,firstIndex,secondIndex)
+
+def replaceIndex(columns,firstIndex,secondIndex):
+    temp =columns[firstIndex]
+    columns[firstIndex] = columns[secondIndex]
+    columns[secondIndex] = temp
+
+def partition(columns, start, end, columnColor):
+    pivot = columns[start]
+    low = start + 1
+    high = end
+
+    while True:
+        while low <= high and columns[high].height >= pivot.height:
+            high = high - 1
+
+        while low <= high and columns[low].height <= pivot.height:
+            low = low + 1
+
+        if low <= high:
+            replaceColumns(columns,low,high)
+        else:
+            break
+
+    replaceColumns(columns,start,high)
+    return high
+
+def quick_sort(columns, start, end, columnColor):
+    if start >= end:
+        return
+
+    p = partition(columns, start, end, columnColor)
+
+    yield
+
+    funcs = [quick_sort(columns, start, p-1, columnColor),quick_sort(columns, p+1, end, columnColor)]
+
+    for func in funcs:
+        try:
+            yield from func
+        except StopIteration:
+            pass
+
+def mergeSort(arr, plus):#it doesnt work for now
+    global columns
+    print(len(arr))
+    if len(arr) > 1:
+        mid = len(arr)//2
+        L = arr[:mid]
+        R = arr[mid:]
+
+        mergeSort(L, plus)
+        mergeSort(R, plus+mid)
+
+        i = j = k = 0
+
+        while i < len(L) and j < len(R):
+            if L[i].height < R[j].height:
+                #columns[k] = L[i]
+                #replaceColumns(orginalColumns,k+plus,i+plus)
+                i += 1
+            else:
+                #columns[k] = R[j]
+                for a in range(j-k):
+                    replaceColumns(columns,(j+plus+mid)-a,(j+plus+mid)-a-1)
+                    
+                j += 1
+            k += 1
+        
+        while i < len(L):
+            #columns[k] = L[i]
+            #replaceColumns(orginalColumns,k+plus,i+plus)
+            i += 1
+            k += 1
+        
+        while j < len(R):
+            #columns[k] = R[j]
+            for a in range(j-k):
+                replaceColumns(columns,(j+plus+mid)-a,(j+plus+mid)-a-1)
+                
+            j += 1
+            k += 1
+        
+
+def heapify(columns, n, i):
+    largest = i
+    l = 2 * i + 1
+    r = 2 * i + 2
+
+    if l < n and columns[i].height < columns[l].height:
+        largest = l
+
+    if r < n and columns[largest].height < columns[r].height:
+        largest = r
+
+    if largest != i:
+        yield
+        replaceColumns(columns,i,largest)
+        try:
+            yield from heapify(columns, n, largest)
+        except StopIteration:
+            pass
+
+
+def heapSort(columns):
+    n = len(columns)
+
+    funcs = []
+
+    for i in range(n//2, -1, -1):
+        funcs.append(heapify(columns, n, i))
+    for func in funcs:
+        try:
+            yield from func
+        except StopIteration:
+            funcs.remove(func)
+    funcs = []
+    for i in range(n-1, 0, -1):
+        funcs.append(i)
+        funcs.append(heapify(columns, i, 0))
+    
+    for func in funcs:
+        try:
+            yield from func
+        except StopIteration:
+            funcs.remove(func)
+        except TypeError:
+            replaceColumns(columns,func,0)
+
+def bubbleSort(columns):
+    n = len(columns)
+    for i in range(n-1):
+        for j in range(0, n-i-1):
+            if columns[j].height > columns[j+1].height:
+                yield
+                replaceColumns(columns,j,j+1)
