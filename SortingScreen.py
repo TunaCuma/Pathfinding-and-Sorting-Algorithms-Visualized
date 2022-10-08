@@ -7,6 +7,10 @@ from theme import Theme
 
 dragging = False
 columns = []
+quickSortStarted = False
+mergeSortStarted = False
+heapSortStarted = False
+bubbleSortStarted = False
 
 from button import Button
 class SliderBall:
@@ -88,6 +92,7 @@ class Column:
 
 def sortingScreen(screen):
     global columns
+    global quickSortStarted,mergeSortStarted,heapSortStarted,bubbleSortStarted
     running = True
     initDone = False
     finish = False
@@ -123,10 +128,7 @@ def sortingScreen(screen):
 
     themeMenu = False
     algoMenu = False
-    quickSortStarted = False
-    mergeSortStarted = False
-    heapSortStarted = False
-    bubbleSortStarted = False
+
 
     isVisualStarted = False
 
@@ -184,6 +186,7 @@ def sortingScreen(screen):
         
         for i in range(columnAmount):
             if len(columns) < columnAmount:
+                turnOffSorts()
                 initDone = False
                 columns.append(Column(screen,(255, 255, 255), 210+i*columnWidth,350,columnWidth,i*(500/(columnAmount-1))+10))
             else: # all columns are initilazed and ready to oparate
@@ -192,6 +195,7 @@ def sortingScreen(screen):
 
         if shuffle.draw() and initDone:
             shuffleIndex = 0
+            turnOffSorts()
         if shuffleIndex < columnAmount:
             otherColumnIndex = random.randint(0,columnAmount-1)
             replaceColumns(columns,shuffleIndex,otherColumnIndex)
@@ -240,6 +244,7 @@ def sortingScreen(screen):
                 isVisualStarted = False
         
 
+
         if quickSortStarted:
             try:
                 next(a)
@@ -285,7 +290,12 @@ def sortingScreen(screen):
 
         pygame.display.update()
 
-
+def turnOffSorts():
+    global quickSortStarted,mergeSortStarted,heapSortStarted,bubbleSortStarted
+    quickSortStarted = False
+    mergeSortStarted = False
+    heapSortStarted = False
+    bubbleSortStarted = False
 
 def replaceColumns(columns,firstIndex,secondIndex):
     columns[firstIndex].replace(columns[secondIndex])
