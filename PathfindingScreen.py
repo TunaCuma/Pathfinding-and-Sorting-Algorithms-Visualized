@@ -368,16 +368,14 @@ def pathfindingScreen(screen):
         if clearGrid.draw():
             clearWeights(grid)
             clearWallsFunc(grid)
+            clearPathFunc(grid)
             done = False
             isVisualStarted = False
         if clearWalls.draw():
             clearWeights(grid)
             clearWallsFunc(grid)
         if clearPath.draw():
-            for i in range(grid.xCount):
-                for j in range(grid.yCount):
-                    if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == RIGTH_PATH:
-                        grid.grid[i][j].change_status(EMPTY)
+            clearPathFunc(grid)
             done = False
             isVisualStarted = False
         
@@ -396,6 +394,7 @@ def pathfindingScreen(screen):
             if mazesAndPatternsToUsetemp != -1:
                 clearWallsFunc(grid)
                 clearWeights(grid)
+                clearPathFunc(grid)
                 
                 mazesAndPatternsToUse = mazesAndPatternsToUsetemp
                 mazesAndPatternsMenu = False
@@ -488,6 +487,11 @@ def clearWallsFunc(grid):
         for j in range(grid.yCount):
             if grid.grid[i][j].status == WALL:
                 grid.grid[i][j].change_status(EMPTY)
+def clearPathFunc(grid):
+    for i in range(grid.xCount):
+        for j in range(grid.yCount):
+            if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == TRIED2:
+                grid.grid[i][j].change_status(EMPTY)
 def clearWeights(grid):
     for i in range(grid.xCount):
         for j in range(grid.yCount):
@@ -531,14 +535,25 @@ def depthFirstSearchOneStep(grid, stack):
 HORIZONTAL = 1
 VERTICAL = 0
 
+def choiceOfWay(skewAmount,horizontalOdds = 50):
+    horizontalOdds += skewAmount
+    if random.randint(1,100) < horizontalOdds:
+        return HORIZONTAL
+    else:
+        return VERTICAL
+
 def RecursionMaze(grid,xstart,xend,ystart,yend,skew= None):
     height = yend-ystart+1
     width = xend-xstart+1
     if width ==1 or height ==1:
         return
-    choice = random.choice([HORIZONTAL,VERTICAL])
-    if skew != None and choice != skew:
-        choice = random.choice([HORIZONTAL,VERTICAL])
+
+    if skew == HORIZONTAL:
+        choice = choiceOfWay(0,80)
+    elif skew == VERTICAL:
+        choice = choiceOfWay(0,20)
+    else:
+        choice = choiceOfWay((height-width)*1.5)
     funcs = []
 
     if choice == HORIZONTAL:
