@@ -1,3 +1,4 @@
+import random
 import pygame
 from button import Button
 from dropdownmenu import dropdownmenu
@@ -20,6 +21,7 @@ painting = False
 paint = WALL
 keyDown = False
 dropdownIsOpen = False
+frameFinished = False
 
 travelerCoords = (1,1)
 
@@ -233,6 +235,7 @@ def pathfindingScreen(screen):
     running = True
     clock = pygame.time.Clock()
     global dropdownIsOpen
+    global frameFinished
 
     grid = Grid(51,21,30,195,340, screen)
     grid.grid[1][1].change_status(TRAVELER)
@@ -255,7 +258,7 @@ def pathfindingScreen(screen):
     mazesAndPatterns = Button('Mazes And Patterns',300,40,(500,260),5,screen,gui_font)
     addBomb = Button('Add Bomb',300,40,(190,210),5,screen,gui_font)
     clearGrid = Button('Clear Grid',300,40,(1120,210),5,screen,gui_font)
-    clearWalls = Button('Clear Walls',300,40,(1430,210),5,screen,gui_font)
+    clearWalls = Button('Clear Walls and Weights',300,40,(1430,210),5,screen,gui_font)
     clearPath = Button('Clear Path',300,40,(500,210),5,screen,gui_font)
     speed = Button('Speed: Fast',300,40,(190,260),5,screen,gui_font)
     theme = Button('theme 1',300,40,(1120,260),5,screen,gui_font)
@@ -269,7 +272,11 @@ def pathfindingScreen(screen):
     mazesAndPatternsMenu = False
     speedMenu = False
     themeMenu = False
+
     bombAdded = False
+
+    startFraming = False
+    startRecursionMaze = False
 
     text_surf = title_font.render("Pathfinding Visualizer",True,'#FFFFFF')
     menuSurface = pygame.Surface((1860,325), pygame.SRCALPHA)
@@ -290,7 +297,7 @@ def pathfindingScreen(screen):
     algorithmsDropDown = dropdownmenu(['Breadth-first Search','Depth-first Search','A* Search','Greedy Best-first Search','Swarm Algorithm','Convergent Swarm Algorithm','Bidirectional Swarm Algorithm',"Dijktra's Algorithm"],(1410,310),screen,40,300,gui_font)
     speedDropDown = dropdownmenu(["Slow","Average","Fast"],(190,310), screen,40,300,gui_font)
     themeDropDown = dropdownmenu(["theme 1","theme 2","theme 3"],(1120,310), screen,40,300,gui_font)
-    mazesAndPatternsDropDown = dropdownmenu(["Recursive Division","Recursive Division (vertival skew)","Recursive Division (horizontal skew)","Basic Random Maze","Basic weigth Maze","Simple Stair Pattern"],(500,310), screen,40,360,gui_font)
+    mazesAndPatternsDropDown = dropdownmenu(["Recursive Division","Recursive Division (vertical skew)","Recursive Division (horizontal skew)","Basic Random Maze","Basic Weight Maze","Simple Stair Pattern"],(500,310), screen,40,360,gui_font)
 
     isVisualStarted = False
     while running:
@@ -359,18 +366,13 @@ def pathfindingScreen(screen):
                             break
 
         if clearGrid.draw():
-            for i in range(grid.xCount):
-                for j in range(grid.yCount):
-                    grid.grid[i][j].change_status(EMPTY)
-            grid.grid[1][1].change_status(TRAVELER)
-            grid.grid[0][0].change_status(DESTINATION)
+            clearWeights(grid)
+            clearWallsFunc(grid)
             done = False
             isVisualStarted = False
         if clearWalls.draw():
-            for i in range(grid.xCount):
-                for j in range(grid.yCount):
-                    if grid.grid[i][j].status == WALL:
-                        grid.grid[i][j].change_status(EMPTY) 
+            clearWeights(grid)
+            clearWallsFunc(grid)
         if clearPath.draw():
             for i in range(grid.xCount):
                 for j in range(grid.yCount):
@@ -392,18 +394,43 @@ def pathfindingScreen(screen):
         if mazesAndPatternsMenu:
             mazesAndPatternsToUsetemp = mazesAndPatternsDropDown.Draw()
             if mazesAndPatternsToUsetemp != -1:
+                clearWallsFunc(grid)
+                clearWeights(grid)
+                
                 mazesAndPatternsToUse = mazesAndPatternsToUsetemp
                 mazesAndPatternsMenu = False
-                #TODO
+                
+                if mazesAndPatternsToUse == "Recursive Division":
+                    startFraming = True
+                    startRecursionMaze = True
+                    f = frame(grid,51,21)
+                    rM = RecursionMaze(grid,1,49,1,19)
+                elif mazesAndPatternsToUse == "Recursive Division (vertical skew)":
+                    startFraming = True
+                    startRecursionMaze = True
+                    f = frame(grid,51,21)
+                    rM = RecursionMaze(grid,1,49,1,19,VERTICAL)
+                elif mazesAndPatternsToUse == "Recursive Division (horizontal skew)":
+                    startFraming = True
+                    startRecursionMaze = True
+                    f = frame(grid,51,21)
+                    rM = RecursionMaze(grid,1,49,1,19,HORIZONTAL)
+                elif mazesAndPatternsToUse == "Basic Random Maze":
+                    basicMaze(grid)
+                elif mazesAndPatternsToUse == "Basic Weight Maze":
+                    basicWeighted(grid)
+                elif mazesAndPatternsToUse == "Simple Stair Pattern":
+                    stairsPattern(grid)
+                    
         if speedMenu:
             speedValuetemp = speedDropDown.Draw()
             if speedValuetemp != -1:
                 speed.text = "Speed: " + speedValuetemp
                 if speedValuetemp == "Fast":
                     speedValue = 1
-                if speedValuetemp == "Average":
+                elif speedValuetemp == "Average":
                     speedValue = 0.5
-                if speedValuetemp == "Slow":
+                elif speedValuetemp == "Slow":
                     speedValue = 0.25
                 speedMenu = False
             
@@ -415,14 +442,26 @@ def pathfindingScreen(screen):
                 if themeToUse == "theme 1":
                     grid.change_gridColor(theme1.Color)
                     backgroundToUse = theme1.background
-                if themeToUse == "theme 2":
+                elif themeToUse == "theme 2":
                     grid.change_gridColor(theme2.Color)
                     backgroundToUse = theme2.background
-                if themeToUse == "theme 3":
+                elif themeToUse == "theme 3":
                     grid.change_gridColor(theme3.Color)
                     backgroundToUse = theme3.background
 
                 themeMenu = False
+
+        if startFraming:
+            try:
+                next(f)
+            except StopIteration:
+                frameFinished = True
+                startFraming = False
+        if startRecursionMaze and frameFinished:
+            try:
+                next(rM)
+            except StopIteration:
+                startRecursionMaze = False
 
         select = 0
         if algoToUse == 'Breadth-first Search':
@@ -442,7 +481,18 @@ def pathfindingScreen(screen):
 
         pygame.display.update()
 
-
+def clearWallsFunc(grid):
+    global frameFinished
+    frameFinished = False
+    for i in range(grid.xCount):
+        for j in range(grid.yCount):
+            if grid.grid[i][j].status == WALL:
+                grid.grid[i][j].change_status(EMPTY)
+def clearWeights(grid):
+    for i in range(grid.xCount):
+        for j in range(grid.yCount):
+            if grid.grid[i][j].status == WEIGHTEDNOD:
+                grid.grid[i][j].change_status(EMPTY)
 def breadthFirstSearchOneStep(grid, searchQueue):
     if searchQueue:
         current = searchQueue.pop(0) 
@@ -477,3 +527,103 @@ def depthFirstSearchOneStep(grid, stack):
                 elif grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == DESTINATION :
                     return False
     return False
+
+HORIZONTAL = 1
+VERTICAL = 0
+
+def RecursionMaze(grid,xstart,xend,ystart,yend,skew= None):
+    height = yend-ystart+1
+    width = xend-xstart+1
+    if width ==1 or height ==1:
+        return
+    choice = random.choice([HORIZONTAL,VERTICAL])
+    if skew != None and choice != skew:
+        choice = random.choice([HORIZONTAL,VERTICAL])
+    funcs = []
+
+    if choice == HORIZONTAL:
+        wally = ystart + (random.randint(1,height//2)*2)-1
+        while grid.grid[xstart-1][wally].status == EMPTY or grid.grid[xend+1][wally].status == EMPTY:
+            wally = ystart + (random.randint(1,height//2)*2)-1
+            print("wally: " , height)
+        hole = (random.randint(0,width//2)*2)
+
+        for i in range(width):
+            if i != hole and grid.grid[xstart+ i][wally].status==EMPTY:
+                yield
+                grid.grid[xstart+ i][wally].change_status(WALL)
+        
+        funcs.append(RecursionMaze(grid,xstart,xend,ystart,wally-1,skew))
+        funcs.append(RecursionMaze(grid,xstart,xend,wally+1,yend,skew))
+
+        for func in funcs:
+            try:
+                yield from func
+            except StopIteration:
+                funcs.remove(func)
+
+    elif choice == VERTICAL:
+        wallx = xstart + (random.randint(1,width//2)*2)-1
+        while grid.grid[wallx][ystart-1].status == EMPTY or grid.grid[wallx][yend+1].status == EMPTY:
+            wallx = xstart + (random.randint(1,width//2)*2)-1
+            print("wallx: ", width)
+
+        hole = (random.randint(0,height//2)*2)
+
+        for i in range(height):
+            if i != hole and grid.grid[wallx][ystart+ i].status ==EMPTY:
+                yield
+                grid.grid[wallx][ystart+ i].change_status(WALL)
+
+        funcs.append(RecursionMaze(grid,xstart,wallx-1,ystart,yend,skew))
+        funcs.append(RecursionMaze(grid,wallx+1,xend,ystart,yend,skew))
+
+        for func in funcs:
+            try:
+                yield from func
+            except StopIteration:
+                funcs.remove(func)
+
+def basicMaze(grid):
+    for i in range(grid.xCount):
+        for j in range(grid.yCount):
+            if grid.grid[i][j].status == EMPTY and 1 == random.randint(1,5):
+                grid.grid[i][j].change_status(WALL)
+
+def basicWeighted(grid):
+    for i in range(grid.xCount):
+        for j in range(grid.yCount):
+            if grid.grid[i][j].status == EMPTY and 1 == random.randint(1,5):
+                grid.grid[i][j].change_status(WEIGHTEDNOD)
+
+def stairsPattern(grid):
+    y = grid.yCount
+    for i in range(grid.xCount-1):
+        
+        if y-i-1 >1:
+            if grid.grid[i][y-i-1].status == EMPTY:
+                grid.grid[i][y-i-1].change_status(WALL)
+        elif i-y+3 < y-1:
+            if grid.grid[i][i-y+3].status == EMPTY:
+                grid.grid[i][i-y+3].change_status(WALL)
+        elif 2*y-i+14 >1:
+            if grid.grid[i][2*y-i+14].status == EMPTY:
+                grid.grid[i][2*y-i+14].change_status(WALL)
+
+def frame(grid,x,y):#yield can be implemented here
+    global frameFinished
+    for i in range(y):
+        if grid.grid[0][i].status == EMPTY:
+            yield
+            grid.grid[0][i].change_status(WALL)
+        if grid.grid[x-1][i].status == EMPTY:
+            yield
+            grid.grid[x-1][i].change_status(WALL)
+    for i in range(x):
+        if grid.grid[i][0].status == EMPTY:
+            yield
+            grid.grid[i][0].change_status(WALL)
+        if grid.grid[i][y-1].status == EMPTY:
+            yield
+            grid.grid[i][y-1].change_status(WALL)
+    frameFinished = True
