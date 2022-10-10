@@ -1,5 +1,9 @@
 from inspect import stack
+from pathlib import Path
+from pickle import FALSE
 from re import S
+from telnetlib import DET
+from turtle import Turtle
 import pygame
 from button import Button
 from dropdownmenu import dropdownmenu
@@ -24,6 +28,7 @@ keyDown = False
 dropdownIsOpen = False
 
 travelerCoords = (1,1)
+destinationCoords = (20,20)
 
 class Cell(object):
     def __init__(self, size, color, screen, x, y, i, j):
@@ -91,6 +96,7 @@ class Cell(object):
         global painting
         global keyDown
         global travelerCoords
+        global destinationCoords
         action = False
         mouse_pos = pygame.mouse.get_pos()
         if pygame.mouse.get_pressed()[0]:
@@ -136,6 +142,7 @@ class Cell(object):
         elif draggingDest and self.rect.collidepoint(mouse_pos): #destination dropped here
             self.change_status(DESTINATION)
             draggingDest = False
+            destinationCoords = (self.i, self.j)
         elif draggingBomb and self.rect.collidepoint(mouse_pos): #Bomb dropped here
             self.change_status(BOMB)
             draggingBomb = False
@@ -193,6 +200,7 @@ class Cell(object):
 
 
 class Grid(object):
+
     def __init__(self, xc, yc, csize, x, y, screen, color=[255, 255, 255, 220]):
         self.xCount = xc
         self.yCount = yc
@@ -202,7 +210,7 @@ class Grid(object):
         self.win = screen
         self.grid = []
         self.undoList = [[], []]
-
+        
         for i in range(self.xCount):
             self.grid.append([])
             self.undoList[0].append([])
@@ -237,8 +245,8 @@ def pathfindingScreen(screen):
     global dropdownIsOpen
 
     grid = Grid(51,21,30,195,340, screen)
-    grid.grid[10][10].change_status(TRAVELER)
-    grid.grid[10][20].change_status(DESTINATION)
+    grid.grid[travelerCoords[0]][travelerCoords[1]].change_status(TRAVELER)
+    grid.grid[destinationCoords[0]][destinationCoords[1]].change_status(DESTINATION)
 
     backwardImg = pygame.image.load('assets/backwards.png')
     background4 = pygame.image.load('assets/background4.png')
@@ -295,6 +303,7 @@ def pathfindingScreen(screen):
     mazesAndPatternsDropDown = dropdownmenu(["Recursive Division","Recursive Division (vertival skew)","Recursive Division (horizontal skew)","Basic Random Maze","Basic weigth Maze","Simple Stair Pattern"],(500,310), screen,40,360,gui_font)
 
     isVisualStarted = False
+    initial = False
     while running:
         msElapsed = clock.tick(60)
         
@@ -322,6 +331,7 @@ def pathfindingScreen(screen):
             current = travelerCoords
             searchQueue = [current]
             isVisualStarted = True
+            initial = False
 
         if algorithms.draw():
             algorithmsMenu = not algorithmsMenu
@@ -387,7 +397,6 @@ def pathfindingScreen(screen):
             algoToUsetemp = algorithmsDropDown.Draw()
             if algoToUsetemp != -1:
                 algorithms.text = algoToUsetemp
-                algoToUse = algoToUsetemp
                 algorithmsMenu = False
                 
             
@@ -425,17 +434,31 @@ def pathfindingScreen(screen):
                     backgroundToUse = theme3.background
 
                 themeMenu = False
-        print(greedyBestSearch(grid,10,10,10,20))
-        break
-        select = 0
-        if algoToUse == 'Breadth-first Search':
-            select = 0
-        elif algoToUse == 'Depth-first Search':
-            select = 1
 
         
 
+       
+        if isVisualStarted and not initial:
+            if algorithms.text == 'Breadth-first Search':
+                traversalOrder, path = breadthFirstSearch(grid)
+            elif algorithms.text == 'Depth-first Search':
+                traversalOrder, path = depthFirstSearch(grid)
+            elif algorithms.text =='Greedy Best-first Search':
+                traversalOrder, path = greedyBestSearch(grid)
+            
+            traversalOrder.pop(0)
+            
+            initial = True
+        
+        if initial:
+            if traversalOrder:
+                grid.grid[traversalOrder[0][0]][traversalOrder[0][1]].change_status(TRIED)
+                traversalOrder.pop(0)
+            elif path:
+                grid.grid[path[0][0]][path[0][1]].change_status(DESTINATION)
+                path.pop(0)
 
+            
         pygame.display.update()
 
 
@@ -453,19 +476,19 @@ def createAbstractGrid(grid):
     
     return absGrid
 
-def depthFirstSearch(grid, startX, startY):
+def depthFirstSearch(grid):
     dfsTraversalOrder = []
     absGrid = createAbstractGrid(grid)
     cache = [[0 for x in range(grid.yCount )] for x in range(grid.xCount)]
 
-    stack = [(startX,startY)]
+    stack = [(travelerCoords[0],travelerCoords[1])]
     dfsTraversalOrder.append(stack[-1])
  
     
     isReached = False
     while stack and not isReached:
         current = stack.pop(-1)
-        coordinates = [[0,1],[0,-1],[1,0],[-1,0]]
+        coordinates = [[0,1],[1,0],[0,-1],[-1,0]]
                     
         for coordinate in coordinates:
             if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
@@ -489,21 +512,19 @@ def depthFirstSearch(grid, startX, startY):
                  if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
                     if cache[current[0] + coordinate[0]][current[1] + coordinate[1]] == cache[current[0]][current[1]] - 1:
                         current = (current[0] + coordinate[0], current[1] + coordinate[1])
+                        break
+
+    return dfsTraversalOrder , path
 
 
 
-
-    return dfsTraversalOrder , path.reverse()
-
-
-
-def breadthFirstSearch(grid,startX,startY):
+def breadthFirstSearch(grid):
     bfsTraversalOrder = []
     absGrid = createAbstractGrid(grid)
     cache = [[0 for x in range(grid.yCount )] for x in range(grid.xCount)]
 
 
-    queue = [(startX,startY)]
+    queue = [(travelerCoords[0], travelerCoords[1])]
     bfsTraversalOrder.append(queue[0])
  
     
@@ -532,18 +553,20 @@ def breadthFirstSearch(grid,startX,startY):
             if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
                 if cache[current[0] + coordinate[0]][current[1] + coordinate[1]] == cache[current[0]][current[1]] - 1:
                     current = (current[0] + coordinate[0], current[1] + coordinate[1])
+                    break
     return bfsTraversalOrder, path
 
 
-def greedyBestSearch(grid,startX,startY, endX, endY):
+def greedyBestSearch(grid):
     greedyBestSearchTraversalOrder = []
     absGrid = createAbstractGrid(grid)
     cache = [[0 for x in range(grid.yCount )] for x in range(grid.xCount)]
 
-    stack = [(startX,startY)]
+    stack = [(travelerCoords[0],travelerCoords[1])]
     greedyBestSearchTraversalOrder.append(stack[-1])
  
-    
+    endX = destinationCoords[0]
+    endY = destinationCoords[1]
     isReached = False
     while stack and not isReached:
         current = stack.pop(-1)
@@ -581,7 +604,6 @@ def greedyBestSearch(grid,startX,startY, endX, endY):
             else:
                 coordinates = [(0,-1),(-1,0),(1,0),(0,1)]
 
-                    
         for coordinate in coordinates:
             if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
                 if absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] == 0 :
@@ -604,4 +626,6 @@ def greedyBestSearch(grid,startX,startY, endX, endY):
             if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
                 if cache[current[0] + coordinate[0]][current[1] + coordinate[1]] == cache[current[0]][current[1]] - 1:
                     current = (current[0] + coordinate[0], current[1] + coordinate[1])
-    return greedyBestSearchTraversalOrder, path.reverse()
+                    break
+
+    return greedyBestSearchTraversalOrder, path
