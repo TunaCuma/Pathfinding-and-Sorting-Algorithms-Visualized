@@ -11,7 +11,7 @@ from theme import Theme
 
 EMPTY = 0
 WALL = 1
-RIGTH_PATH = 2
+RIGHT_PATH = 2
 TRIED = 3
 TRIED2 = 4
 TRAVELER = 5
@@ -126,6 +126,16 @@ class Cell(object):
                                     paint = WALL
                                     painting = True
                                 keyDown = True
+                    elif not (draggingBomb or draggingDest or draggingTrav) and keyDown == False:
+                        action = True
+                        if keyDown == False:
+                            if self.status == WALL:
+                                paint = EMPTY
+                                painting = True
+                            else:
+                                paint = WALL
+                                painting = True
+                            keyDown = True
                 elif self.collide == True:
                     self.collide = False
         elif keyDown == True:
@@ -189,13 +199,15 @@ class Cell(object):
         elif self.status == DESTINATION:
             self.change_color((0,255,255,200))
         elif self.status == BOMB:
-            self.change_color((255,255,0,200))
+            self.change_color((255,0,0,200))
         elif self.status == TRIED:
             self.change_color((0,255,0,200))
         elif self.status == TRIED2:
             self.change_color((0,200,55,200))
         elif self.status == WEIGHTEDNOD:
             self.change_color((0,0,255,200))
+        elif self.status == RIGHT_PATH:
+            self.change_color((255,255,0,200))
 
 
 
@@ -386,7 +398,7 @@ def pathfindingScreen(screen):
         if clearPath.draw():
             for i in range(grid.xCount):
                 for j in range(grid.yCount):
-                    if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == RIGTH_PATH:
+                    if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == RIGHT_PATH:
                         grid.grid[i][j].change_status(EMPTY)
             done = False
             isVisualStarted = False
@@ -437,7 +449,7 @@ def pathfindingScreen(screen):
 
         
 
-       
+
         if isVisualStarted and not initial:
             if algorithms.text == 'Breadth-first Search':
                 traversalOrder, path = breadthFirstSearch(grid)
@@ -449,6 +461,7 @@ def pathfindingScreen(screen):
             traversalOrder.pop(0)
             
             initial = True
+            pathReversed = False
         
         if initial:
             pygame.time.wait(speedValue)
@@ -456,7 +469,10 @@ def pathfindingScreen(screen):
                 grid.grid[traversalOrder[0][0]][traversalOrder[0][1]].change_status(TRIED)
                 traversalOrder.pop(0)
             elif path:
-                grid.grid[path[0][0]][path[0][1]].change_status(DESTINATION)
+                if pathReversed == False:
+                    path.reverse()
+                    pathReversed = True
+                grid.grid[path[0][0]][path[0][1]].change_status(RIGHT_PATH)
                 path.pop(0)
 
             
@@ -484,7 +500,7 @@ def depthFirstSearch(grid):
 
     stack = [(travelerCoords[0],travelerCoords[1])]
     dfsTraversalOrder.append(stack[-1])
- 
+
     
     isReached = False
     while stack and not isReached:
@@ -510,7 +526,7 @@ def depthFirstSearch(grid):
             path.append(current)
 
             for coordinate in coordinates:
-                 if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
+                if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
                     if cache[current[0] + coordinate[0]][current[1] + coordinate[1]] == cache[current[0]][current[1]] - 1:
                         current = (current[0] + coordinate[0], current[1] + coordinate[1])
                         break
@@ -527,7 +543,7 @@ def breadthFirstSearch(grid):
 
     queue = [(travelerCoords[0], travelerCoords[1])]
     bfsTraversalOrder.append(queue[0])
- 
+
     
     isReached = False
     while queue and not isReached:
@@ -565,7 +581,7 @@ def greedyBestSearch(grid):
 
     stack = [(travelerCoords[0],travelerCoords[1])]
     greedyBestSearchTraversalOrder.append(stack[-1])
- 
+
     endX = destinationCoords[0]
     endY = destinationCoords[1]
     isReached = False
