@@ -1,9 +1,3 @@
-from inspect import stack
-from pathlib import Path
-from pickle import FALSE
-from re import S
-from telnetlib import DET
-from turtle import Turtle
 import pygame
 from button import Button
 from dropdownmenu import dropdownmenu
@@ -18,6 +12,7 @@ TRAVELER = 5
 DESTINATION = 6
 BOMB = 7
 WEIGHTEDNOD = 8
+FAKE_TRAVELER = 9
 
 draggingTrav = False
 draggingDest = False
@@ -52,8 +47,10 @@ class Cell(object):
         self.subsurface.fill(self.color)
         self.gridColor = (0, 0, 0)
 
-    def change_color(self, color):
-        if self.status>4:
+    def change_color(self, color, currentRect = None):
+        if currentRect:
+            self.currentRect = currentRect
+        elif self.status>4:
             self.currentRect = 150
         else:
             self.currentRect = 0
@@ -69,13 +66,6 @@ class Cell(object):
 
     def Draw(self):
         global paint
-        self.win.blit(self.subsurface, self.pos)
-        
-        if self.status>4:
-            pygame.draw.rect(self.win, (255, 255, 255), self.rect, 1)
-        else:
-            pygame.draw.rect(self.win, self.gridColor, self.rect, 1)
-
         if self.status>4:
             if self.check_drag():
                 self.change_status(self.oldStatus)
@@ -83,10 +73,16 @@ class Cell(object):
         elif self.check_click():
             self.change_status(paint)
         
-        if not int(self.currentRect) >= self.color[3]:
-            #print(int(self.currentRect))
+        if int(self.currentRect) < self.color[3]:
             self.currentRect += self.speed
             self.subsurface.fill((self.color[0],self.color[1],self.color[2],int(self.currentRect)))
+
+        self.win.blit(self.subsurface, self.pos)
+
+        if self.status>4:
+            pygame.draw.rect(self.win, (255, 255, 255), self.rect, 1)
+        else:
+            pygame.draw.rect(self.win, self.gridColor, self.rect, 1)
 
     def check_click(self):
         global draggingTrav
@@ -208,6 +204,8 @@ class Cell(object):
             self.change_color((0,0,255,200))
         elif self.status == RIGHT_PATH:
             self.change_color((255,255,0,200))
+        elif self.status == FAKE_TRAVELER:
+            self.change_color((255,0,255,200))
 
 
 
@@ -398,11 +396,42 @@ def pathfindingScreen(screen):
         if clearPath.draw():
             for i in range(grid.xCount):
                 for j in range(grid.yCount):
-                    if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == RIGHT_PATH:
+                    if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == RIGHT_PATH or grid.grid[i][j].status == FAKE_TRAVELER:
                         grid.grid[i][j].change_status(EMPTY)
             done = False
             isVisualStarted = False
         
+        if isVisualStarted and not initial:
+            if algorithms.text == 'Breadth-first Search':
+                traversalOrder, path = breadthFirstSearch(grid)
+            elif algorithms.text == 'Depth-first Search':
+                traversalOrder, path = depthFirstSearch(grid)
+            elif algorithms.text =='Greedy Best-first Search':
+                traversalOrder, path = greedyBestSearch(grid)
+            
+            traversalOrder.pop(0)
+            
+            initial = True
+            pathReversed = False
+        
+        if initial:
+            pygame.time.wait(speedValue)
+            if traversalOrder:
+                grid.grid[traversalOrder[0][0]][traversalOrder[0][1]].change_status(TRIED)
+                traversalOrder.pop(0)
+            elif path:
+                for i in range(grid.xCount):
+                    for j in range(grid.yCount):
+                        if grid.grid[i][j].status == FAKE_TRAVELER:
+                            grid.grid[i][j].change_status(RIGHT_PATH)
+                if pathReversed == False:
+                    path.reverse()
+                    pathReversed = True
+                    grid.grid[travelerCoords[0]][travelerCoords[1]].change_color((255,0,255,50),49)
+                grid.grid[path[0][0]][path[0][1]].change_status(FAKE_TRAVELER)
+                path.pop(0)
+        
+        #=============grid updates here==============
         grid.Draw()
 
         if algorithmsMenu:
@@ -450,30 +479,7 @@ def pathfindingScreen(screen):
         
 
 
-        if isVisualStarted and not initial:
-            if algorithms.text == 'Breadth-first Search':
-                traversalOrder, path = breadthFirstSearch(grid)
-            elif algorithms.text == 'Depth-first Search':
-                traversalOrder, path = depthFirstSearch(grid)
-            elif algorithms.text =='Greedy Best-first Search':
-                traversalOrder, path = greedyBestSearch(grid)
-            
-            traversalOrder.pop(0)
-            
-            initial = True
-            pathReversed = False
         
-        if initial:
-            pygame.time.wait(speedValue)
-            if traversalOrder:
-                grid.grid[traversalOrder[0][0]][traversalOrder[0][1]].change_status(TRIED)
-                traversalOrder.pop(0)
-            elif path:
-                if pathReversed == False:
-                    path.reverse()
-                    pathReversed = True
-                grid.grid[path[0][0]][path[0][1]].change_status(RIGHT_PATH)
-                path.pop(0)
 
             
         pygame.display.update()
