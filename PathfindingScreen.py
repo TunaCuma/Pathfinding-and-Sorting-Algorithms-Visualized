@@ -545,9 +545,12 @@ def clearWallsFunc(grid):
         for j in range(grid.yCount):
             if grid.grid[i][j].status == WALL:
                 grid.grid[i][j].change_status(EMPTY)
-def clearPathFunc(grid):
-    global travelerCoords
+def colorsBackToNormal(grid):
+    global travelerCoords, destinationCoords
     grid.grid[travelerCoords[0]][travelerCoords[1]].change_color((255,0,255,200))
+    grid.grid[destinationCoords[0]][destinationCoords[1]].change_color((0,255,255,200))
+def clearPathFunc(grid):
+    colorsBackToNormal(grid)
     for i in range(grid.xCount):
         for j in range(grid.yCount):
             if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == TRIED2 or grid.grid[i][j].status == FAKE_TRAVELER or grid.grid[i][j].status == RIGHT_PATH:
