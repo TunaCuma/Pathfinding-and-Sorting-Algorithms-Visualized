@@ -18,7 +18,7 @@ pygame.display.set_icon(icon)
 # Background
 background = pygame.image.load('assets/background3.png')
 anim = []
-for i in range(12):
+for i in range(30):
     anim.append(pygame.image.load('assets/anim1.png'))
 for i in range(6):
     anim.append(pygame.image.load('assets/anim{}.png'.format(i+1)))
