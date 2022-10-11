@@ -6,13 +6,14 @@ from theme import Theme
 
 EMPTY = 0
 WALL = 1
-RIGTH_PATH = 2
+RIGHT_PATH = 2
 TRIED = 3
 TRIED2 = 4
 TRAVELER = 5
 DESTINATION = 6
 BOMB = 7
 WEIGHTEDNOD = 8
+FAKE_TRAVELER = 9
 
 draggingTrav = False
 draggingDest = False
@@ -24,6 +25,7 @@ dropdownIsOpen = False
 frameFinished = False
 
 travelerCoords = (1,1)
+destinationCoords = (20,20)
 
 class Cell(object):
     def __init__(self, size, color, screen, x, y, i, j):
@@ -47,8 +49,10 @@ class Cell(object):
         self.subsurface.fill(self.color)
         self.gridColor = (0, 0, 0)
 
-    def change_color(self, color):
-        if self.status>4:
+    def change_color(self, color, currentRect = None):
+        if currentRect:
+            self.currentRect = currentRect
+        elif self.status>4:
             self.currentRect = 150
         else:
             self.currentRect = 0
@@ -64,13 +68,6 @@ class Cell(object):
 
     def Draw(self):
         global paint
-        self.win.blit(self.subsurface, self.pos)
-        
-        if self.status>4:
-            pygame.draw.rect(self.win, (255, 255, 255), self.rect, 1)
-        else:
-            pygame.draw.rect(self.win, self.gridColor, self.rect, 1)
-
         if self.status>4:
             if self.check_drag():
                 self.change_status(self.oldStatus)
@@ -78,10 +75,16 @@ class Cell(object):
         elif self.check_click():
             self.change_status(paint)
         
-        if not int(self.currentRect) >= self.color[3]:
-            #print(int(self.currentRect))
+        if int(self.currentRect) < self.color[3]:
             self.currentRect += self.speed
             self.subsurface.fill((self.color[0],self.color[1],self.color[2],int(self.currentRect)))
+
+        self.win.blit(self.subsurface, self.pos)
+
+        if self.status>4:
+            pygame.draw.rect(self.win, (255, 255, 255), self.rect, 1)
+        else:
+            pygame.draw.rect(self.win, self.gridColor, self.rect, 1)
 
     def check_click(self):
         global draggingTrav
@@ -91,6 +94,7 @@ class Cell(object):
         global painting
         global keyDown
         global travelerCoords
+        global destinationCoords
         action = False
         mouse_pos = pygame.mouse.get_pos()
         if pygame.mouse.get_pressed()[0]:
@@ -120,6 +124,16 @@ class Cell(object):
                                     paint = WALL
                                     painting = True
                                 keyDown = True
+                    elif not (draggingBomb or draggingDest or draggingTrav) and keyDown == False:
+                        action = True
+                        if keyDown == False:
+                            if self.status == WALL:
+                                paint = EMPTY
+                                painting = True
+                            else:
+                                paint = WALL
+                                painting = True
+                            keyDown = True
                 elif self.collide == True:
                     self.collide = False
         elif keyDown == True:
@@ -136,6 +150,7 @@ class Cell(object):
         elif draggingDest and self.rect.collidepoint(mouse_pos): #destination dropped here
             self.change_status(DESTINATION)
             draggingDest = False
+            destinationCoords = (self.i, self.j)
         elif draggingBomb and self.rect.collidepoint(mouse_pos): #Bomb dropped here
             self.change_status(BOMB)
             draggingBomb = False
@@ -182,17 +197,22 @@ class Cell(object):
         elif self.status == DESTINATION:
             self.change_color((0,255,255,200))
         elif self.status == BOMB:
-            self.change_color((255,255,0,200))
+            self.change_color((255,0,0,200))
         elif self.status == TRIED:
             self.change_color((0,255,0,200))
         elif self.status == TRIED2:
             self.change_color((0,200,55,200))
         elif self.status == WEIGHTEDNOD:
             self.change_color((0,0,255,200))
+        elif self.status == RIGHT_PATH:
+            self.change_color((255,255,0,200))
+        elif self.status == FAKE_TRAVELER:
+            self.change_color((255,0,255,200))
 
 
 
 class Grid(object):
+
     def __init__(self, xc, yc, csize, x, y, screen, color=[255, 255, 255, 220]):
         self.xCount = xc
         self.yCount = yc
@@ -202,7 +222,7 @@ class Grid(object):
         self.win = screen
         self.grid = []
         self.undoList = [[], []]
-
+        
         for i in range(self.xCount):
             self.grid.append([])
             self.undoList[0].append([])
@@ -238,8 +258,8 @@ def pathfindingScreen(screen):
     global frameFinished
 
     grid = Grid(51,21,30,195,340, screen)
-    grid.grid[1][1].change_status(TRAVELER)
-    grid.grid[0][0].change_status(DESTINATION)
+    grid.grid[travelerCoords[0]][travelerCoords[1]].change_status(TRAVELER)
+    grid.grid[destinationCoords[0]][destinationCoords[1]].change_status(DESTINATION)
 
     backwardImg = pygame.image.load('assets/backwards.png')
     background4 = pygame.image.load('assets/background4.png')
@@ -300,6 +320,7 @@ def pathfindingScreen(screen):
     mazesAndPatternsDropDown = dropdownmenu(["Recursive Division","Recursive Division (vertical skew)","Recursive Division (horizontal skew)","Basic Random Maze","Basic Weight Maze","Simple Stair Pattern"],(500,310), screen,40,360,gui_font)
 
     isVisualStarted = False
+    initial = False
     while running:
         msElapsed = clock.tick(60)
         
@@ -327,6 +348,7 @@ def pathfindingScreen(screen):
             current = travelerCoords
             searchQueue = [current]
             isVisualStarted = True
+            initial = False
 
         if algorithms.draw():
             algorithmsMenu = not algorithmsMenu
@@ -379,13 +401,43 @@ def pathfindingScreen(screen):
             done = False
             isVisualStarted = False
         
+        if isVisualStarted and not initial:
+            if algorithms.text == 'Breadth-first Search':
+                traversalOrder, path = breadthFirstSearch(grid)
+            elif algorithms.text == 'Depth-first Search':
+                traversalOrder, path = depthFirstSearch(grid)
+            elif algorithms.text =='Greedy Best-first Search':
+                traversalOrder, path = greedyBestSearch(grid)
+            
+            traversalOrder.pop(0)
+            
+            initial = True
+            pathReversed = False
+        
+        if initial:
+            pygame.time.wait(speedValue)
+            if traversalOrder:
+                grid.grid[traversalOrder[0][0]][traversalOrder[0][1]].change_status(TRIED)
+                traversalOrder.pop(0)
+            elif path:
+                for i in range(grid.xCount):
+                    for j in range(grid.yCount):
+                        if grid.grid[i][j].status == FAKE_TRAVELER:
+                            grid.grid[i][j].change_status(RIGHT_PATH)
+                if pathReversed == False:
+                    path.reverse()
+                    pathReversed = True
+                    grid.grid[travelerCoords[0]][travelerCoords[1]].change_color((255,0,255,50),49)
+                grid.grid[path[0][0]][path[0][1]].change_status(FAKE_TRAVELER)
+                path.pop(0)
+        
+        #=============grid updates here==============
         grid.Draw()
 
         if algorithmsMenu:
             algoToUsetemp = algorithmsDropDown.Draw()
             if algoToUsetemp != -1:
                 algorithms.text = algoToUsetemp
-                algoToUse = algoToUsetemp
                 algorithmsMenu = False
                 
             
@@ -427,10 +479,10 @@ def pathfindingScreen(screen):
                 speed.text = "Speed: " + speedValuetemp
                 if speedValuetemp == "Fast":
                     speedValue = 1
-                elif speedValuetemp == "Average":
-                    speedValue = 0.5
-                elif speedValuetemp == "Slow":
-                    speedValue = 0.25
+                if speedValuetemp == "Average":
+                    speedValue = 15
+                if speedValuetemp == "Slow":
+                    speedValue = 50
                 speedMenu = False
             
         if themeMenu:
@@ -468,18 +520,16 @@ def pathfindingScreen(screen):
         elif algoToUse == 'Depth-first Search':
             select = 1
 
-        if isVisualStarted:
-            waitTillOne += speedValue
-            if waitTillOne>= 1:
-                waitTillOne = 0
-                if select == 0:
-                    isVisualStarted = breadthFirstSearchOneStep(grid, searchQueue)
-                elif select == 1:
-                    isVisualStarted = depthFirstSearchOneStep(grid, searchQueue) 
 
+        
 
+            
         pygame.display.update()
 
+
+def createAbstractGrid(grid):
+
+    absGrid = [[-1 for x in range(grid.yCount )] for x in range(grid.xCount)]
 def clearWallsFunc(grid):
     global frameFinished
     frameFinished = False
@@ -502,30 +552,150 @@ def breadthFirstSearchOneStep(grid, searchQueue):
         current = searchQueue.pop(0) 
         
     
-        coordinates = [[0,1],[0,-1],[1,0],[-1,0]]
-            
-        for coordinate in coordinates:
-            if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 20 and current[0] + coordinate[0]< 50 :
-                if grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == EMPTY :
-                    grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRIED)
-                    pygame.display.update()
-                    searchQueue.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
-                    grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRIED)
-                    pygame.display.update()
-                elif grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == DESTINATION :
-                    return False
-    return True
 
-def depthFirstSearchOneStep(grid, stack):
-    if stack:
+    for i in range(grid.xCount):
+        for j in range(grid.yCount):
+            if grid.grid[i][j].status == EMPTY:
+                absGrid[i][j] = 0
+            elif grid.grid[i][j].status == DESTINATION:
+                absGrid[i][j] = 2
+    
+    return absGrid
+
+def depthFirstSearch(grid):
+    dfsTraversalOrder = []
+    absGrid = createAbstractGrid(grid)
+    cache = [[0 for x in range(grid.yCount )] for x in range(grid.xCount)]
+
+    stack = [(travelerCoords[0],travelerCoords[1])]
+    dfsTraversalOrder.append(stack[-1])
+
+    
+    isReached = False
+    while stack and not isReached:
         current = stack.pop(-1)
-
-        coordinates = [[0,1],[0,-1],[1,0],[-1,0]]
-            
+        coordinates = [[0,1],[1,0],[0,-1],[-1,0]]
+                    
         for coordinate in coordinates:
-            if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 20 and current[0] + coordinate[0]< 50 :
-                if grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == EMPTY :
-                    grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].change_status(TRIED)
+            if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
+                if absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] == 0 :
+                    stack.append((current[0] , current[1]))
+                    absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] = 1
+                    dfsTraversalOrder.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
+                    stack.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
+                    cache[current[0] + coordinate[0]][current[1] + coordinate[1]] = cache[current[0]][current[1]] + 1
+                    break
+                elif absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] == 2:
+                    isReached = True
+                    break
+    
+        path = []
+
+        while cache[current[0]][current[1]] != 0:
+            path.append(current)
+
+            for coordinate in coordinates:
+                if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
+                    if cache[current[0] + coordinate[0]][current[1] + coordinate[1]] == cache[current[0]][current[1]] - 1:
+                        current = (current[0] + coordinate[0], current[1] + coordinate[1])
+                        break
+
+    return dfsTraversalOrder , path
+
+
+
+def breadthFirstSearch(grid):
+    bfsTraversalOrder = []
+    absGrid = createAbstractGrid(grid)
+    cache = [[0 for x in range(grid.yCount )] for x in range(grid.xCount)]
+
+
+    queue = [(travelerCoords[0], travelerCoords[1])]
+    bfsTraversalOrder.append(queue[0])
+
+    
+    isReached = False
+    while queue and not isReached:
+        current = queue.pop(0)
+        coordinates = [[0,1],[0,-1],[1,0],[-1,0]]
+                    
+        for coordinate in coordinates:
+            if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
+                if absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] == 0 :
+                    absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] = 1
+                    queue.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
+                    bfsTraversalOrder.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
+                    cache[current[0] + coordinate[0]][current[1] + coordinate[1]] = cache[current[0]][current[1]] + 1
+                elif absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] == 2:
+                    isReached = True
+                    break
+                
+    path = []
+
+    while cache[current[0]][current[1]] != 0:
+        path.append(current)
+
+        for coordinate in coordinates:
+            if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
+                if cache[current[0] + coordinate[0]][current[1] + coordinate[1]] == cache[current[0]][current[1]] - 1:
+                    current = (current[0] + coordinate[0], current[1] + coordinate[1])
+                    break
+    return bfsTraversalOrder, path
+
+
+def greedyBestSearch(grid):
+    greedyBestSearchTraversalOrder = []
+    absGrid = createAbstractGrid(grid)
+    cache = [[0 for x in range(grid.yCount )] for x in range(grid.xCount)]
+
+    stack = [(travelerCoords[0],travelerCoords[1])]
+    greedyBestSearchTraversalOrder.append(stack[-1])
+
+    endX = destinationCoords[0]
+    endY = destinationCoords[1]
+    isReached = False
+    while stack and not isReached:
+        current = stack.pop(-1)
+        coordinates = []
+
+
+        if endX == current[0]:
+            if (endY > current[1]):
+                coordinates = [(0,1),(1,0),(-1,0),(0,-1)]
+            else:
+                coordinates = [(0,-1),(1,0),(-1,0),(0,1)]
+        elif endY == current[1]:
+            if (endX > current[0]):
+                coordinates = [(1,0),(0,-1),(0,1),(-1,0)]
+            else:
+                coordinates = [(-1,0),(0,-1),(0,1),(1,0)]
+        elif endX > current[0] and endY > current[1]:
+            if endX - current[0] > endY - current[1]:
+                coordinates = [(1,0),(0,1),(0,-1),(-1,0)]
+            else:
+                coordinates = [(0,1),(1,0),(-1,0),(0,-1)]
+        elif endX > current[0] and endY < current[1]: 
+            if endX - current[0] > current[1] - endY:
+                coordinates = [(1,0),(0,-1),(0,1),(-1,0)]
+            else:
+                coordinates = [(0,-1),(1,0),(-1,0),(0,1)]
+        elif endY > current[1]:
+            if current[0] - endX > endY - current[1]:
+                coordinates = [(-1,0),(0,1),(0,-1),(1,0)]
+            else:
+                coordinates = [(0,1),(-1,0),(1,0),(0,-1)]
+        else:
+            if current[0] - endX > current[1] - endY:
+                coordinates = [(-1,0),(0,-1),(0,1),(1,0)]
+            else:
+                coordinates = [(0,-1),(-1,0),(1,0),(0,1)]
+
+        for coordinate in coordinates:
+            if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
+                if absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] == 0 :
+                    stack.append((current[0] , current[1]))
+                    absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] = 1
+                    greedyBestSearchTraversalOrder.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
                     stack.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
                     return True
                 elif grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == DESTINATION :
@@ -642,3 +812,21 @@ def frame(grid,x,y):#yield can be implemented here
             yield
             grid.grid[i][y-1].change_status(WALL)
     frameFinished = True
+                    cache[current[0] + coordinate[0]][current[1] + coordinate[1]] = cache[current[0]][current[1]] + 1
+                    break
+                elif absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] == 2:
+                    isReached = True
+                    break
+        
+    path = []
+
+    while cache[current[0]][current[1]] != 0:
+        path.append(current)
+
+        for coordinate in coordinates:
+            if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
+                if cache[current[0] + coordinate[0]][current[1] + coordinate[1]] == cache[current[0]][current[1]] - 1:
+                    current = (current[0] + coordinate[0], current[1] + coordinate[1])
+                    break
+
+    return greedyBestSearchTraversalOrder, path
