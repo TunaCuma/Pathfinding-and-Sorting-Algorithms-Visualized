@@ -199,9 +199,9 @@ class Cell(object):
         elif self.status == BOMB:
             self.change_color((255,0,0,200))
         elif self.status == TRIED:
-            self.change_color((0,255,0,200))
+            self.change_color((127,127,255,200))
         elif self.status == TRIED2:
-            self.change_color((0,200,55,200))
+            self.change_color((127,127,200,200))
         elif self.status == WEIGHTEDNOD:
             self.change_color((0,0,255,200))
         elif self.status == RIGHT_PATH:
@@ -430,6 +430,14 @@ def pathfindingScreen(screen):
                     grid.grid[travelerCoords[0]][travelerCoords[1]].change_color((255,0,255,50),49)
                 grid.grid[path[0][0]][path[0][1]].change_status(FAKE_TRAVELER)
                 path.pop(0)
+
+                if(len(path)==0):
+                    grid.grid[destinationCoords[0]][destinationCoords[1]].change_color((0,255,0,200))
+            else:
+                for i in range(grid.xCount):
+                    for j in range(grid.yCount):
+                        if grid.grid[i][j].status == FAKE_TRAVELER:
+                            grid.grid[i][j].change_status(RIGHT_PATH)
         
         #=============grid updates here==============
         grid.Draw()
@@ -538,10 +546,13 @@ def clearWallsFunc(grid):
             if grid.grid[i][j].status == WALL:
                 grid.grid[i][j].change_status(EMPTY)
 def clearPathFunc(grid):
+    global travelerCoords
+    grid.grid[travelerCoords[0]][travelerCoords[1]].change_color((255,0,255,200))
     for i in range(grid.xCount):
         for j in range(grid.yCount):
-            if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == TRIED2:
+            if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == TRIED2 or grid.grid[i][j].status == FAKE_TRAVELER or grid.grid[i][j].status == RIGHT_PATH:
                 grid.grid[i][j].change_status(EMPTY)
+
 def clearWeights(grid):
     for i in range(grid.xCount):
         for j in range(grid.yCount):
@@ -812,6 +823,156 @@ def frame(grid,x,y):#yield can be implemented here
             yield
             grid.grid[i][y-1].change_status(WALL)
     frameFinished = True
+
+def createAbstractGrid(grid):
+
+    absGrid = [[-1 for x in range(grid.yCount )] for x in range(grid.xCount)]
+    
+
+    for i in range(grid.xCount):
+        for j in range(grid.yCount):
+            if grid.grid[i][j].status == EMPTY:
+                absGrid[i][j] = 0
+            elif grid.grid[i][j].status == DESTINATION:
+                absGrid[i][j] = 2
+    
+    return absGrid
+
+def depthFirstSearch(grid):
+    dfsTraversalOrder = []
+    absGrid = createAbstractGrid(grid)
+    cache = [[0 for x in range(grid.yCount )] for x in range(grid.xCount)]
+
+    stack = [(travelerCoords[0],travelerCoords[1])]
+    dfsTraversalOrder.append(stack[-1])
+
+    
+    isReached = False
+    while stack and not isReached:
+        current = stack.pop(-1)
+        coordinates = [[0,1],[1,0],[0,-1],[-1,0]]
+                    
+        for coordinate in coordinates:
+            if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
+                if absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] == 0 :
+                    stack.append((current[0] , current[1]))
+                    absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] = 1
+                    dfsTraversalOrder.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
+                    stack.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
+                    cache[current[0] + coordinate[0]][current[1] + coordinate[1]] = cache[current[0]][current[1]] + 1
+                    break
+                elif absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] == 2:
+                    isReached = True
+                    break
+    
+        path = []
+
+        while cache[current[0]][current[1]] != 0:
+            path.append(current)
+
+            for coordinate in coordinates:
+                if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
+                    if cache[current[0] + coordinate[0]][current[1] + coordinate[1]] == cache[current[0]][current[1]] - 1:
+                        current = (current[0] + coordinate[0], current[1] + coordinate[1])
+                        break
+
+    return dfsTraversalOrder , path
+
+
+
+def breadthFirstSearch(grid):
+    bfsTraversalOrder = []
+    absGrid = createAbstractGrid(grid)
+    cache = [[0 for x in range(grid.yCount )] for x in range(grid.xCount)]
+
+
+    queue = [(travelerCoords[0], travelerCoords[1])]
+    bfsTraversalOrder.append(queue[0])
+
+    
+    isReached = False
+    while queue and not isReached:
+        current = queue.pop(0)
+        coordinates = [[0,1],[0,-1],[1,0],[-1,0]]
+                    
+        for coordinate in coordinates:
+            if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
+                if absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] == 0 :
+                    absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] = 1
+                    queue.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
+                    bfsTraversalOrder.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
+                    cache[current[0] + coordinate[0]][current[1] + coordinate[1]] = cache[current[0]][current[1]] + 1
+                elif absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] == 2:
+                    isReached = True
+                    break
+                
+    path = []
+
+    while cache[current[0]][current[1]] != 0:
+        path.append(current)
+
+        for coordinate in coordinates:
+            if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
+                if cache[current[0] + coordinate[0]][current[1] + coordinate[1]] == cache[current[0]][current[1]] - 1:
+                    current = (current[0] + coordinate[0], current[1] + coordinate[1])
+                    break
+    return bfsTraversalOrder, path
+
+
+def greedyBestSearch(grid):
+    greedyBestSearchTraversalOrder = []
+    absGrid = createAbstractGrid(grid)
+    cache = [[0 for x in range(grid.yCount )] for x in range(grid.xCount)]
+
+    stack = [(travelerCoords[0],travelerCoords[1])]
+    greedyBestSearchTraversalOrder.append(stack[-1])
+
+    endX = destinationCoords[0]
+    endY = destinationCoords[1]
+    isReached = False
+    while stack and not isReached:
+        current = stack.pop(-1)
+        coordinates = []
+
+
+        if endX == current[0]:
+            if (endY > current[1]):
+                coordinates = [(0,1),(1,0),(-1,0),(0,-1)]
+            else:
+                coordinates = [(0,-1),(1,0),(-1,0),(0,1)]
+        elif endY == current[1]:
+            if (endX > current[0]):
+                coordinates = [(1,0),(0,-1),(0,1),(-1,0)]
+            else:
+                coordinates = [(-1,0),(0,-1),(0,1),(1,0)]
+        elif endX > current[0] and endY > current[1]:
+            if endX - current[0] > endY - current[1]:
+                coordinates = [(1,0),(0,1),(0,-1),(-1,0)]
+            else:
+                coordinates = [(0,1),(1,0),(-1,0),(0,-1)]
+        elif endX > current[0] and endY < current[1]: 
+            if endX - current[0] > current[1] - endY:
+                coordinates = [(1,0),(0,-1),(0,1),(-1,0)]
+            else:
+                coordinates = [(0,-1),(1,0),(-1,0),(0,1)]
+        elif endY > current[1]:
+            if current[0] - endX > endY - current[1]:
+                coordinates = [(-1,0),(0,1),(0,-1),(1,0)]
+            else:
+                coordinates = [(0,1),(-1,0),(1,0),(0,-1)]
+        else:
+            if current[0] - endX > current[1] - endY:
+                coordinates = [(-1,0),(0,-1),(0,1),(1,0)]
+            else:
+                coordinates = [(0,-1),(-1,0),(1,0),(0,1)]
+
+        for coordinate in coordinates:
+            if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
+                if absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] == 0 :
+                    stack.append((current[0] , current[1]))
+                    absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] = 1
+                    greedyBestSearchTraversalOrder.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
+                    stack.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
                     cache[current[0] + coordinate[0]][current[1] + coordinate[1]] = cache[current[0]][current[1]] + 1
                     break
                 elif absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] == 2:
