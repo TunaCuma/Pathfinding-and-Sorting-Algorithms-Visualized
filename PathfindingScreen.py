@@ -374,8 +374,8 @@ def pathfindingScreen(screen):
             for i in range(grid.xCount):
                 for j in range(grid.yCount):
                     grid.grid[i][j].change_status(EMPTY)
-            grid.grid[10][10].change_status(TRAVELER)
-            grid.grid[10][20].change_status(DESTINATION)
+            grid.grid[travelerCoords[0]][travelerCoords[1]].change_status(TRAVELER)
+            grid.grid[destinationCoords[0]][destinationCoords[1]].change_status(DESTINATION)
             done = False
             isVisualStarted = False
         if clearWalls.draw():
@@ -413,9 +413,9 @@ def pathfindingScreen(screen):
                 if speedValuetemp == "Fast":
                     speedValue = 1
                 if speedValuetemp == "Average":
-                    speedValue = 0.5
+                    speedValue = 15
                 if speedValuetemp == "Slow":
-                    speedValue = 0.25
+                    speedValue = 50
                 speedMenu = False
             
         if themeMenu:
@@ -451,6 +451,7 @@ def pathfindingScreen(screen):
             initial = True
         
         if initial:
+            pygame.time.wait(speedValue)
             if traversalOrder:
                 grid.grid[traversalOrder[0][0]][traversalOrder[0][1]].change_status(TRIED)
                 traversalOrder.pop(0)
