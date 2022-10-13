@@ -26,9 +26,11 @@ painting = False
 paint = WALL
 keyDown = False
 dropdownIsOpen = False
+bombAdded = False
 
 travelerCoords = (1,1)
 destinationCoords = (20,20)
+bombCoords = (0,0)
 
 class Cell(object):
     def __init__(self, size, color, screen, x, y, i, j):
@@ -97,6 +99,7 @@ class Cell(object):
         global keyDown
         global travelerCoords
         global destinationCoords
+        global bombCoords
         action = False
         mouse_pos = pygame.mouse.get_pos()
         if pygame.mouse.get_pressed()[0]:
@@ -146,6 +149,7 @@ class Cell(object):
         elif draggingBomb and self.rect.collidepoint(mouse_pos): #Bomb dropped here
             self.change_status(BOMB)
             draggingBomb = False
+            bombCoords = (self.i, self.j)
 
         return action
     
@@ -186,6 +190,8 @@ class Cell(object):
         elif self.status == TRAVELER:
             travelerCoords = (self.i,self.j)
             self.change_color((255,0,255,200))
+        elif self.status == RIGTH_PATH:
+            self.change_color((255,0,0,200))
         elif self.status == DESTINATION:
             self.change_color((0,255,255,200))
         elif self.status == BOMB:
@@ -193,7 +199,7 @@ class Cell(object):
         elif self.status == TRIED:
             self.change_color((0,255,0,200))
         elif self.status == TRIED2:
-            self.change_color((0,200,55,200))
+            self.change_color((0,0,255,200))
         elif self.status == WEIGHTEDNOD:
             self.change_color((0,0,255,200))
 
@@ -279,7 +285,6 @@ def pathfindingScreen(screen):
     mazesAndPatternsMenu = False
     speedMenu = False
     themeMenu = False
-    bombAdded = False
 
     text_surf = title_font.render("Pathfinding Visualizer",True,'#FFFFFF')
     menuSurface = pygame.Surface((1860,325), pygame.SRCALPHA)
@@ -304,6 +309,7 @@ def pathfindingScreen(screen):
 
     isVisualStarted = False
     initial = False
+    global bombAdded
     while running:
         msElapsed = clock.tick(60)
         
@@ -378,6 +384,9 @@ def pathfindingScreen(screen):
             grid.grid[destinationCoords[0]][destinationCoords[1]].change_status(DESTINATION)
             done = False
             isVisualStarted = False
+            initial = False
+            bombAdded = False
+            
         if clearWalls.draw():
             for i in range(grid.xCount):
                 for j in range(grid.yCount):
@@ -439,50 +448,78 @@ def pathfindingScreen(screen):
 
        
         if isVisualStarted and not initial:
-            if algorithms.text == 'Breadth-first Search':
-                traversalOrder, path = breadthFirstSearch(grid)
-            elif algorithms.text == 'Depth-first Search':
-                traversalOrder, path = depthFirstSearch(grid)
-            elif algorithms.text =='Greedy Best-first Search':
-                traversalOrder, path = greedyBestSearch(grid)
-            
-            traversalOrder.pop(0)
-            
+            if bombAdded:
+                if algorithms.text == 'Breadth-first Search':
+                    
+                    travelerToBomb, travelerToBombPath = breadthFirstSearch(grid, travelerCoords[0], travelerCoords[1],bombCoords[0], bombCoords[1])
+                    bombToDest, bombToDestPath = breadthFirstSearch(grid,bombCoords[0], bombCoords[1], destinationCoords[0], destinationCoords[1])
+                    
+                    travelerToBomb.pop(0)
+                    bombToDest.pop(0)
+                    travelerToBombPath.reverse()
+                    bombToDestPath.reverse()
+
+            else:
+                if algorithms.text == 'Breadth-first Search':
+                    travelerToDest, travelerToDestPath = breadthFirstSearch(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0], destinationCoords[1])
+                elif algorithms.text == 'Depth-first Search':
+                    travelerToDest, travelerToDestPath = depthFirstSearch(grid)
+                elif algorithms.text =='Greedy Best-first Search':
+                    travelerToDest, travelerToDestPath = greedyBestSearch(grid)
+
+                travelerToDest.pop(0)
+                travelerToDestPath.reverse()
+                            
             initial = True
         
-        if initial:
+        if isVisualStarted and initial:
             pygame.time.wait(speedValue)
-            if traversalOrder:
-                grid.grid[traversalOrder[0][0]][traversalOrder[0][1]].change_status(TRIED)
-                traversalOrder.pop(0)
-            elif path:
-                grid.grid[path[0][0]][path[0][1]].change_status(DESTINATION)
-                path.pop(0)
+            if bombAdded:
+                if travelerToBomb:
+                    grid.grid[travelerToBomb[0][0]][travelerToBomb[0][1]].change_status(TRIED)
+                    travelerToBomb.pop(0)
+                elif bombToDest:
+                    grid.grid[bombToDest[0][0]][bombToDest[0][1]].change_status(TRIED2)
+                    bombToDest.pop(0)
+                elif travelerToBombPath:
+                    grid.grid[travelerToBombPath[0][0]][travelerToBombPath[0][1]].change_status(RIGTH_PATH)
+                    travelerToBombPath.pop(0)
+                elif bombToDestPath:
+                    grid.grid[bombToDestPath[0][0]][bombToDestPath[0][1]].change_status(RIGTH_PATH)
+                    bombToDestPath.pop(0)
+            else:
+                if travelerToDest:
+                    grid.grid[travelerToDest[0][0]][travelerToDest[0][1]].change_status(TRIED)
+                    travelerToDest.pop(0)
+                elif travelerToDestPath:
+                    grid.grid[travelerToDestPath[0][0]][travelerToDestPath[0][1]].change_status(RIGTH_PATH)
+                    travelerToDestPath.pop(0)
 
             
         pygame.display.update()
 
 
-def createAbstractGrid(grid):
+def createAbstractGrid(grid, endX, endY):
 
     absGrid = [[-1 for x in range(grid.yCount )] for x in range(grid.xCount)]
     
 
     for i in range(grid.xCount):
         for j in range(grid.yCount):
-            if grid.grid[i][j].status == EMPTY:
+            if grid.grid[i][j].status == EMPTY or grid.grid[i][j].status == TRIED:
                 absGrid[i][j] = 0
-            elif grid.grid[i][j].status == DESTINATION:
-                absGrid[i][j] = 2
-    
+
+    absGrid[endX][endY] = 2
+
+
     return absGrid
 
-def depthFirstSearch(grid):
+def depthFirstSearch(grid, startX, startY, endX, endY):
     dfsTraversalOrder = []
-    absGrid = createAbstractGrid(grid)
+    absGrid = createAbstractGrid(grid, endX, endY)
     cache = [[0 for x in range(grid.yCount )] for x in range(grid.xCount)]
 
-    stack = [(travelerCoords[0],travelerCoords[1])]
+    stack = [(startX,startY)]
     dfsTraversalOrder.append(stack[-1])
  
     
@@ -519,13 +556,13 @@ def depthFirstSearch(grid):
 
 
 
-def breadthFirstSearch(grid):
+def breadthFirstSearch(grid,startX, startY, endX, endY):
     bfsTraversalOrder = []
-    absGrid = createAbstractGrid(grid)
+    absGrid = createAbstractGrid(grid, endX, endY)
     cache = [[0 for x in range(grid.yCount )] for x in range(grid.xCount)]
 
 
-    queue = [(travelerCoords[0], travelerCoords[1])]
+    queue = [(startX, startY)]
     bfsTraversalOrder.append(queue[0])
  
     
