@@ -27,8 +27,9 @@ frameFinished = False
 travelerCoords = (1,1)
 destinationCoords = (20,20)
 
-class Cell(object):
-    def __init__(self, size, color, screen, x, y, i, j):
+class Cell(pygame.sprite.Sprite):
+    def __init__(self, size, color, screen, x, y, i, j, theme, spriteArrs = None):
+        super().__init__()
         self.size = size
         self.x = x
         self.y = y
@@ -36,6 +37,7 @@ class Cell(object):
         self.j = j
         self.pos = (self.x, self.y)
         self.rect = pygame.Rect((self.x, self.y), (self.size, self.size))
+        self.rect.topleft = self.pos
         self.win = screen
         self.color = color
         self.drag = False
@@ -48,19 +50,52 @@ class Cell(object):
         self.subsurface = pygame.Surface((self.size,self.size), pygame.SRCALPHA)
         self.subsurface.fill(self.color)
         self.gridColor = (0, 0, 0)
-
+        self.theme = theme
+        self.current_sprite = 0
+        if spriteArrs:
+            self.spriteArrs = spriteArrs
+            self.animation = True
+            self.sprites = spriteArrs[2] # empty stripes
+            self.image = self.sprites[self.current_sprite]
+        else:
+            self.spriteArrs = None
+            self.animation = False
+            self.sprites = None
+            self.image = None
     def change_color(self, color, currentRect = None):
         if currentRect:
             self.currentRect = currentRect
         elif self.status>4:
-            self.currentRect = 150
+            self.currentRect = 0
         else:
             self.currentRect = 0
         self.color = color
         
-
-        
-        #pygame.draw.rect(self.win, (0, 0, 0), self.rect, 1)
+    def update_sprites(self):
+        if self.status == EMPTY:
+            if random.randint(1,12) ==1:
+                self.sprites = self.spriteArrs[2]
+            else:
+                self.sprites = [self.spriteArrs[2][0]]
+            
+        elif self.status == WALL:
+            self.sprites = self.spriteArrs[3]
+        elif self.status == TRAVELER:
+            self.sprites = self.spriteArrs[0]
+        elif self.status == DESTINATION:
+            self.sprites = self.spriteArrs[1]
+        elif self.status == BOMB:
+            self.sprites = self.spriteArrs[4]
+        elif self.status == TRIED:
+            self.sprites = self.spriteArrs[2]
+        elif self.status == TRIED2:
+            self.sprites = self.spriteArrs[2]
+        elif self.status == WEIGHTEDNOD:
+            self.sprites = self.spriteArrs[2]
+        elif self.status == RIGHT_PATH:
+            self.sprites = self.spriteArrs[2]
+        elif self.status == FAKE_TRAVELER:
+            self.sprites = self.spriteArrs[0]
     
     def change_gridColor(self, gridColor):
         self.gridColor = gridColor
@@ -68,6 +103,7 @@ class Cell(object):
 
     def Draw(self):
         global paint
+
         if self.status>4:
             if self.check_drag():
                 self.change_status(self.oldStatus)
@@ -80,11 +116,33 @@ class Cell(object):
             self.subsurface.fill((self.color[0],self.color[1],self.color[2],int(self.currentRect)))
 
         self.win.blit(self.subsurface, self.pos)
+        
 
         if self.status>4:
-            pygame.draw.rect(self.win, (255, 255, 255), self.rect, 1)
+            pygame.draw.rect(self.win, (0,0,0), self.rect, 1)
         else:
             pygame.draw.rect(self.win, self.gridColor, self.rect, 1)
+    
+
+    def update(self,speed):
+        if self.animation == True:
+            self.current_sprite += speed
+            if int(self.current_sprite) >= 15: 
+                self.current_sprite = 0
+            self.image = self.sprites[int((self.current_sprite/15)*len(self.sprites))]
+
+    def update_theme(self,theme):
+        self.change_gridColor(theme.Color)
+        if theme.themeArrs:
+            self.animation = True
+            self.spriteArrs = theme.themeArrs
+            self.update_sprites()
+            self.image = self.sprites[int((self.current_sprite/15)*len(self.sprites))]
+        else:
+            self.animation = False
+            self.spriteArrs = None
+            self.sprites = None
+            self.image = None
 
     def check_click(self):
         global draggingTrav
@@ -188,32 +246,34 @@ class Cell(object):
         global travelerCoords
         self.status = status
         if self.status == EMPTY:
-            self.change_color((255,255,255,220))
+            self.change_color((255,255,255,10))
         elif self.status == WALL:
-            self.change_color((20,20,20,255))
+            self.change_color((20,20,20,10))
         elif self.status == TRAVELER:
             travelerCoords = (self.i,self.j)
-            self.change_color((255,0,255,200))
+            self.change_color((255,0,255,10))
         elif self.status == DESTINATION:
-            self.change_color((0,255,255,200))
+            self.change_color((0,255,255,10))
         elif self.status == BOMB:
-            self.change_color((255,0,0,200))
+            self.change_color((255,0,0,10))
         elif self.status == TRIED:
-            self.change_color((127,127,255,200))
+            self.change_color((127,127,255,100),99)
         elif self.status == TRIED2:
-            self.change_color((127,127,200,200))
+            self.change_color((127,127,200,100),99)
         elif self.status == WEIGHTEDNOD:
-            self.change_color((0,0,255,200))
+            self.change_color((0,0,255,10))
         elif self.status == RIGHT_PATH:
-            self.change_color((255,255,0,200))
+            self.change_color((255,255,0,100),99)
         elif self.status == FAKE_TRAVELER:
-            self.change_color((255,0,255,200))
+            self.change_color((255,0,255,10))
+        if self.status != TRIED and self.status != TRIED2: 
+            self.update_theme(self.theme)
 
 
 
 class Grid(object):
 
-    def __init__(self, xc, yc, csize, x, y, screen, color=[255, 255, 255, 220]):
+    def __init__(self, xc, yc, csize, x, y, screen, moving_sprites, theme, color=[255, 255, 255, 220]):
         self.xCount = xc
         self.yCount = yc
         self.cellSize = csize
@@ -221,34 +281,25 @@ class Grid(object):
         self.color = color
         self.win = screen
         self.grid = []
-        self.undoList = [[], []]
+        self.moving_sprites = moving_sprites
+        self.theme = theme
         
         for i in range(self.xCount):
             self.grid.append([])
-            self.undoList[0].append([])
-            self.undoList[1].append([])
             for j in range(self.yCount):
-                self.grid[i].append(Cell(self.cellSize, self.color, self.win, self.pos[0]+(self.cellSize*i), self.pos[1]+(self.cellSize*j),i,j))
-                self.undoList[0][i].append(self.color)
-                self.undoList[1][i].append(self.color)
+                self.grid[i].append(Cell(self.cellSize, (0,0,0,0), self.win, self.pos[0]+(self.cellSize*i), self.pos[1]+(self.cellSize*j),i,j,self.theme))
+                self.moving_sprites.add(self.grid[i][j])
 
     def Draw(self):
         for i in range(self.xCount):
             for j in range(self.yCount):
                 self.grid[i][j].Draw()
 
-    def change_color(self, posx, posy, color):
-        self.grid[posy][posx].change_color(color)
-    
-    def change_gridColor(self, gridColor):
+    def update_theme(self, theme):
+        self.theme = theme
         for i in range(self.xCount):
             for j in range(self.yCount):
-                self.grid[i][j].change_gridColor(gridColor)
-
-    def clean(self):
-        for i in range(self.xCount):
-            for j in range(self.yCount):
-                self.grid[i][j].change_color(self.color)
+                self.grid[i][j].update_theme(theme)
 
 
 def pathfindingScreen(screen):
@@ -257,14 +308,23 @@ def pathfindingScreen(screen):
     global dropdownIsOpen
     global frameFinished
 
-    grid = Grid(51,21,30,195,340, screen)
-    grid.grid[travelerCoords[0]][travelerCoords[1]].change_status(TRAVELER)
-    grid.grid[destinationCoords[0]][destinationCoords[1]].change_status(DESTINATION)
-
     backwardImg = pygame.image.load('assets/backwards.png')
     background4 = pygame.image.load('assets/background4.png')
     background2 = pygame.image.load('assets/background2.png')
     background3 = pygame.image.load('assets/background3.png')
+    theme1 = Theme(background2, (0,0,0),0)
+    theme2 = Theme(background4, (30,30,160),1)
+    theme3 = Theme(background3, (180,188,188),2)
+    moving_sprites = pygame.sprite.Group()
+
+    grid = Grid(51,21,30,195,340, screen, moving_sprites, theme1)
+    grid.update_theme(theme1)
+    moving_sprites = grid.moving_sprites
+
+    grid.grid[travelerCoords[0]][travelerCoords[1]].change_status(TRAVELER)
+    grid.grid[destinationCoords[0]][destinationCoords[1]].change_status(DESTINATION)
+    grid.grid[travelerCoords[0]][travelerCoords[1]].update_theme(theme1)
+    grid.grid[destinationCoords[0]][destinationCoords[1]].update_theme(theme1)
 
     backgroundToUse = background2
 
@@ -286,6 +346,7 @@ def pathfindingScreen(screen):
     algoToUse = 'Breadth-first Search'
     speedValue = "Fast"
     themeToUse = "theme 1"
+    
     mazesAndPatternsToUse = None
 
     algorithmsMenu = False
@@ -300,11 +361,9 @@ def pathfindingScreen(screen):
 
     text_surf = title_font.render("Pathfinding Visualizer",True,'#FFFFFF')
     menuSurface = pygame.Surface((1860,325), pygame.SRCALPHA)
-    theme1 = Theme(background2, (0,0,0))
-    theme2 = Theme(background4, (30,30,160))
-    theme3 = Theme(background3, (180,188,188))
 
-    
+    grid.update_theme = theme1
+
     done = False
     current = travelerCoords
     searchQueue = [current]
@@ -427,12 +486,9 @@ def pathfindingScreen(screen):
                 if pathReversed == False:
                     path.reverse()
                     pathReversed = True
-                    grid.grid[travelerCoords[0]][travelerCoords[1]].change_color((255,0,255,50),49)
                 grid.grid[path[0][0]][path[0][1]].change_status(FAKE_TRAVELER)
                 path.pop(0)
 
-                if(len(path)==0):
-                    grid.grid[destinationCoords[0]][destinationCoords[1]].change_color((0,255,0,200))
             else:
                 for i in range(grid.xCount):
                     for j in range(grid.yCount):
@@ -440,6 +496,12 @@ def pathfindingScreen(screen):
                             grid.grid[i][j].change_status(RIGHT_PATH)
         
         #=============grid updates here==============
+        for i in range(grid.xCount):
+            for j in range(grid.yCount):
+                screen.blit(grid.grid[i][j].spriteArrs[2][0],grid.grid[i][j].pos)
+
+        moving_sprites.draw(screen)
+        moving_sprites.update(0.25)
         grid.Draw()
 
         if algorithmsMenu:
@@ -499,14 +561,14 @@ def pathfindingScreen(screen):
                 theme.text = themeToUsetemp
                 themeToUse = themeToUsetemp
                 if themeToUse == "theme 1":
-                    grid.change_gridColor(theme1.Color)
                     backgroundToUse = theme1.background
+                    grid.update_theme(theme1)
                 elif themeToUse == "theme 2":
-                    grid.change_gridColor(theme2.Color)
                     backgroundToUse = theme2.background
+                    grid.update_theme(theme2)
                 elif themeToUse == "theme 3":
-                    grid.change_gridColor(theme3.Color)
                     backgroundToUse = theme3.background
+                    grid.update_theme(theme3)
 
                 themeMenu = False
 
@@ -550,7 +612,7 @@ def colorsBackToNormal(grid):
     grid.grid[travelerCoords[0]][travelerCoords[1]].change_color((255,0,255,200))
     grid.grid[destinationCoords[0]][destinationCoords[1]].change_color((0,255,255,200))
 def clearPathFunc(grid):
-    colorsBackToNormal(grid)
+    #colorsBackToNormal(grid)
     for i in range(grid.xCount):
         for j in range(grid.yCount):
             if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == TRIED2 or grid.grid[i][j].status == FAKE_TRAVELER or grid.grid[i][j].status == RIGHT_PATH:
@@ -744,7 +806,6 @@ def RecursionMaze(grid,xstart,xend,ystart,yend,skew= None):
         wally = ystart + (random.randint(1,height//2)*2)-1
         while grid.grid[xstart-1][wally].status == EMPTY or grid.grid[xend+1][wally].status == EMPTY:
             wally = ystart + (random.randint(1,height//2)*2)-1
-            print("wally: " , height)
         hole = (random.randint(0,width//2)*2)
 
         for i in range(width):
@@ -765,7 +826,6 @@ def RecursionMaze(grid,xstart,xend,ystart,yend,skew= None):
         wallx = xstart + (random.randint(1,width//2)*2)-1
         while grid.grid[wallx][ystart-1].status == EMPTY or grid.grid[wallx][yend+1].status == EMPTY:
             wallx = xstart + (random.randint(1,width//2)*2)-1
-            print("wallx: ", width)
 
         hole = (random.randint(0,height//2)*2)
 
