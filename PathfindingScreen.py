@@ -454,18 +454,25 @@ def pathfindingScreen(screen):
                     travelerToBomb, travelerToBombPath = breadthFirstSearch(grid, travelerCoords[0], travelerCoords[1],bombCoords[0], bombCoords[1])
                     bombToDest, bombToDestPath = breadthFirstSearch(grid,bombCoords[0], bombCoords[1], destinationCoords[0], destinationCoords[1])
                     
-                    travelerToBomb.pop(0)
-                    bombToDest.pop(0)
-                    travelerToBombPath.reverse()
-                    bombToDestPath.reverse()
+                elif algorithms.text == 'Depth-first Search':
+                    travelerToBomb, travelerToBombPath = depthFirstSearch(grid, travelerCoords[0], travelerCoords[1],bombCoords[0], bombCoords[1])
+                    bombToDest, bombToDestPath = depthFirstSearch(grid,bombCoords[0], bombCoords[1], destinationCoords[0], destinationCoords[1])
 
+                elif algorithms.text == 'Greedy Best-first Search':
+                    travelerToBomb, travelerToBombPath = greedyBestSearch(grid, travelerCoords[0], travelerCoords[1],bombCoords[0], bombCoords[1])
+                    bombToDest, bombToDestPath = greedyBestSearch(grid,bombCoords[0], bombCoords[1], destinationCoords[0], destinationCoords[1])
+
+                travelerToBomb.pop(0)
+                bombToDest.pop(0)
+                travelerToBombPath.reverse()
+                bombToDestPath.reverse()
             else:
                 if algorithms.text == 'Breadth-first Search':
                     travelerToDest, travelerToDestPath = breadthFirstSearch(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0], destinationCoords[1])
                 elif algorithms.text == 'Depth-first Search':
-                    travelerToDest, travelerToDestPath = depthFirstSearch(grid)
+                    travelerToDest, travelerToDestPath = depthFirstSearch(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0],destinationCoords[1])
                 elif algorithms.text =='Greedy Best-first Search':
-                    travelerToDest, travelerToDestPath = greedyBestSearch(grid)
+                    travelerToDest, travelerToDestPath = greedyBestSearch(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0],destinationCoords[1])
 
                 travelerToDest.pop(0)
                 travelerToDestPath.reverse()
@@ -595,16 +602,15 @@ def breadthFirstSearch(grid,startX, startY, endX, endY):
     return bfsTraversalOrder, path
 
 
-def greedyBestSearch(grid):
+def greedyBestSearch(grid,startX, startY, endX, endY):
     greedyBestSearchTraversalOrder = []
-    absGrid = createAbstractGrid(grid)
+    absGrid = createAbstractGrid(grid,endX,endY)
     cache = [[0 for x in range(grid.yCount )] for x in range(grid.xCount)]
 
-    stack = [(travelerCoords[0],travelerCoords[1])]
+    stack = [(startX,startY)]
     greedyBestSearchTraversalOrder.append(stack[-1])
- 
-    endX = destinationCoords[0]
-    endY = destinationCoords[1]
+
+
     isReached = False
     while stack and not isReached:
         current = stack.pop(-1)
