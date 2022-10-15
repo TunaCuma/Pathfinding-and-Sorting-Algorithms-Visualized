@@ -1,6 +1,7 @@
 from inspect import stack
 from pathlib import Path
 from pickle import FALSE
+from queue import PriorityQueue
 from re import S
 from telnetlib import DET
 from turtle import Turtle
@@ -11,7 +12,7 @@ from theme import Theme
 
 EMPTY = 0
 WALL = 1
-RIGTH_PATH = 2
+RIGHT_PATH = 2
 TRIED = 3
 TRIED2 = 4
 TRAVELER = 5
@@ -190,7 +191,7 @@ class Cell(object):
         elif self.status == TRAVELER:
             travelerCoords = (self.i,self.j)
             self.change_color((255,0,255,200))
-        elif self.status == RIGTH_PATH:
+        elif self.status == RIGHT_PATH:
             self.change_color((255,0,0,200))
         elif self.status == DESTINATION:
             self.change_color((0,255,255,200))
@@ -310,6 +311,7 @@ def pathfindingScreen(screen):
     isVisualStarted = False
     initial = False
     global bombAdded
+    emre = True
     while running:
         msElapsed = clock.tick(60)
         
@@ -395,7 +397,7 @@ def pathfindingScreen(screen):
         if clearPath.draw():
             for i in range(grid.xCount):
                 for j in range(grid.yCount):
-                    if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == RIGTH_PATH:
+                    if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == RIGHT_PATH:
                         grid.grid[i][j].change_status(EMPTY)
             done = False
             isVisualStarted = False
@@ -444,7 +446,10 @@ def pathfindingScreen(screen):
 
                 themeMenu = False
 
-        
+        if emre:
+            print(Dijkstra(grid,travelerCoords[0], travelerCoords[1], destinationCoords[0], destinationCoords[1]))
+            print(breadthFirstSearch(grid,travelerCoords[0], travelerCoords[1], destinationCoords[0], destinationCoords[1])[0])
+            emre = False
 
        
         if isVisualStarted and not initial:
@@ -489,17 +494,17 @@ def pathfindingScreen(screen):
                     grid.grid[bombToDest[0][0]][bombToDest[0][1]].change_status(TRIED2)
                     bombToDest.pop(0)
                 elif travelerToBombPath:
-                    grid.grid[travelerToBombPath[0][0]][travelerToBombPath[0][1]].change_status(RIGTH_PATH)
+                    grid.grid[travelerToBombPath[0][0]][travelerToBombPath[0][1]].change_status(RIGHT_PATH)
                     travelerToBombPath.pop(0)
                 elif bombToDestPath:
-                    grid.grid[bombToDestPath[0][0]][bombToDestPath[0][1]].change_status(RIGTH_PATH)
+                    grid.grid[bombToDestPath[0][0]][bombToDestPath[0][1]].change_status(RIGHT_PATH)
                     bombToDestPath.pop(0)
             else:
                 if travelerToDest:
                     grid.grid[travelerToDest[0][0]][travelerToDest[0][1]].change_status(TRIED)
                     travelerToDest.pop(0)
                 elif travelerToDestPath:
-                    grid.grid[travelerToDestPath[0][0]][travelerToDestPath[0][1]].change_status(RIGTH_PATH)
+                    grid.grid[travelerToDestPath[0][0]][travelerToDestPath[0][1]].change_status(RIGHT_PATH)
                     travelerToDestPath.pop(0)
 
             
@@ -673,3 +678,52 @@ def greedyBestSearch(grid,startX, startY, endX, endY):
                     break
 
     return greedyBestSearchTraversalOrder, path
+
+def createAbsGraph(grid, endX, endY):
+  
+    absGraph = [[-1 for x in range(grid.yCount )] for x in range(grid.xCount)]
+    
+
+    for i in range(grid.xCount):
+        for j in range(grid.yCount):
+            if grid.grid[i][j].status == EMPTY or grid.grid[i][j].status == TRIED:
+                absGraph[i][j] = 1
+            elif grid.grid[i][j].status == WEIGHTEDNOD:
+                absGraph[i][j] = 2
+
+
+    absGraph[endX][endY] = 0
+
+
+    return absGraph
+
+
+def Dijkstra(grid,startX, startY, endX, endY):
+    DijkstraTraversalOrder = []
+    absGraph = createAbsGraph(grid, endX, endY)
+    
+    distances = [[10000 for x in range(grid.yCount )] for x in range(grid.xCount)]
+    distances[startX][startY] = 0
+
+    pq = PriorityQueue()
+    pq.put((0,(startX,startY)))
+
+    DijkstraTraversalOrder.append((startX,startY))
+ 
+    
+    isReached = False
+    
+    while pq and not isReached:
+        current = pq.get()
+        coordinates = [[0,1],[0,-1],[1,0],[-1,0]]
+                    
+        for coordinate in coordinates:
+            if current[1][0] + coordinate[0] > -1 and current[1][1] + coordinate[1] > -1 and current[1][1] + coordinate[1] < 21 and current[1][0] + coordinate[0]< 51 and absGraph[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]] > 0:
+                if distances[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]] > current[0] + absGraph[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]]:
+                    distances[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]] = current[0] + absGraph[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]]
+                    pq.put((distances[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]], (current[1][0] + coordinate[0],current[1][1] + coordinate[1])))
+                    DijkstraTraversalOrder.append((current[1][0] + coordinate[0],current[1][1] + coordinate[1]))
+            elif current[1][0] + coordinate[0] == endX and current[1][1] + coordinate[1] == endY:
+                isReached = True
+        
+    return DijkstraTraversalOrder
