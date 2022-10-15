@@ -115,9 +115,9 @@ def sortingScreen(screen):
     otherColumnIndex = 0
     temp = None
 
-    theme1 = Theme(background2, (255,255,255))
-    theme2 = Theme(background4, (30,30,160))
-    theme3 = Theme(background3, (180,188,188))
+    theme1 = Theme(background2, (255,255,255),0)
+    theme2 = Theme(background4, (30,30,160),1)
+    theme3 = Theme(background3, (180,188,188),2)
 
     themeDropDown = dropdownmenu(["theme 1","theme 2","theme 3"],(1430,310), screen,40,300,gui_font)
     algoDropDown = dropdownmenu(["Merge Sort","Quick Sort","Heap Sort", "Bubble Sort"],(810,310), screen,40,300,gui_font)

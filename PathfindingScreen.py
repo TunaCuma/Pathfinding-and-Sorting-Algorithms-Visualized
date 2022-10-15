@@ -23,9 +23,9 @@ paint = WALL
 keyDown = False
 dropdownIsOpen = False
 frameFinished = False
-
+isVisualStarted = False
 travelerCoords = (1,1)
-destinationCoords = (20,20)
+destinationCoords = (49,19)
 
 class Cell(pygame.sprite.Sprite):
     def __init__(self, size, color, screen, x, y, i, j, theme, spriteArrs = None):
@@ -87,13 +87,25 @@ class Cell(pygame.sprite.Sprite):
         elif self.status == BOMB:
             self.sprites = self.spriteArrs[4]
         elif self.status == TRIED:
-            self.sprites = self.spriteArrs[2]
+            if random.randint(1,12) ==1:
+                self.sprites = self.spriteArrs[2]
+            else:
+                self.sprites = [self.spriteArrs[2][0]]
         elif self.status == TRIED2:
-            self.sprites = self.spriteArrs[2]
+            if random.randint(1,12) ==1:
+                self.sprites = self.spriteArrs[2]
+            else:
+                self.sprites = [self.spriteArrs[2][0]]
         elif self.status == WEIGHTEDNOD:
-            self.sprites = self.spriteArrs[2]
+            if random.randint(1,12) ==1:
+                self.sprites = self.spriteArrs[2]
+            else:
+                self.sprites = [self.spriteArrs[2][0]]
         elif self.status == RIGHT_PATH:
-            self.sprites = self.spriteArrs[2]
+            if random.randint(1,12) ==1:
+                self.sprites = self.spriteArrs[2]
+            else:
+                self.sprites = [self.spriteArrs[2][0]]
         elif self.status == FAKE_TRAVELER:
             self.sprites = self.spriteArrs[0]
     
@@ -119,7 +131,7 @@ class Cell(pygame.sprite.Sprite):
         
 
         if self.status>4:
-            pygame.draw.rect(self.win, (0,0,0), self.rect, 1)
+            pygame.draw.rect(self.win, (100,100,255), self.rect, 1)
         else:
             pygame.draw.rect(self.win, self.gridColor, self.rect, 1)
     
@@ -155,7 +167,7 @@ class Cell(pygame.sprite.Sprite):
         global destinationCoords
         action = False
         mouse_pos = pygame.mouse.get_pos()
-        if pygame.mouse.get_pressed()[0]:
+        if pygame.mouse.get_pressed()[0] and not isVisualStarted:
             if self.pressed == False:
                 self.pressed = True
                 
@@ -223,7 +235,7 @@ class Cell(pygame.sprite.Sprite):
         global painting
         mouse_pos = pygame.mouse.get_pos()
 
-        if self.rect.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0] and not (painting or dropdownIsOpen):
+        if self.rect.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0] and not (painting or dropdownIsOpen or isVisualStarted):
             if self.status == TRAVELER and not (draggingTrav or draggingDest or draggingBomb):
                 draggingTrav = True
 
@@ -266,8 +278,8 @@ class Cell(pygame.sprite.Sprite):
             self.change_color((255,255,0,100),99)
         elif self.status == FAKE_TRAVELER:
             self.change_color((255,0,255,10))
-        if self.status != TRIED and self.status != TRIED2: 
-            self.update_theme(self.theme)
+        
+        self.update_theme(self.theme)
 
 
 
@@ -307,13 +319,14 @@ def pathfindingScreen(screen):
     clock = pygame.time.Clock()
     global dropdownIsOpen
     global frameFinished
-
+    global isVisualStarted
+    global travelerCoords,destinationCoords
     backwardImg = pygame.image.load('assets/backwards.png')
-    background4 = pygame.image.load('assets/background4.png')
+    background5 = pygame.image.load('assets/background5.png')
     background2 = pygame.image.load('assets/background2.png')
     background3 = pygame.image.load('assets/background3.png')
-    theme1 = Theme(background2, (0,0,0),0)
-    theme2 = Theme(background4, (30,30,160),1)
+    theme1 = Theme(background5, (255,255,255),0)
+    theme2 = Theme(background2, (30,30,160),1)
     theme3 = Theme(background3, (180,188,188),2)
     moving_sprites = pygame.sprite.Group()
 
@@ -326,7 +339,7 @@ def pathfindingScreen(screen):
     grid.grid[travelerCoords[0]][travelerCoords[1]].update_theme(theme1)
     grid.grid[destinationCoords[0]][destinationCoords[1]].update_theme(theme1)
 
-    backgroundToUse = background2
+    backgroundToUse = theme1.background
 
     gui_font = pygame.font.Font(None,30)
     title_font = pygame.font.Font(None,50)
@@ -361,9 +374,6 @@ def pathfindingScreen(screen):
 
     text_surf = title_font.render("Pathfinding Visualizer",True,'#FFFFFF')
     menuSurface = pygame.Surface((1860,325), pygame.SRCALPHA)
-
-    grid.update_theme = theme1
-
     done = False
     current = travelerCoords
     searchQueue = [current]
@@ -378,7 +388,7 @@ def pathfindingScreen(screen):
     themeDropDown = dropdownmenu(["theme 1","theme 2","theme 3"],(1120,310), screen,40,300,gui_font)
     mazesAndPatternsDropDown = dropdownmenu(["Recursive Division","Recursive Division (vertical skew)","Recursive Division (horizontal skew)","Basic Random Maze","Basic Weight Maze","Simple Stair Pattern"],(500,310), screen,40,360,gui_font)
 
-    isVisualStarted = False
+    
     initial = False
     while running:
         msElapsed = clock.tick(60)
@@ -447,11 +457,18 @@ def pathfindingScreen(screen):
                             break
 
         if clearGrid.draw():
-            clearWeights(grid)
-            clearWallsFunc(grid)
-            clearPathFunc(grid)
+            for i in range(grid.xCount):
+                for j in range(grid.yCount):
+                    grid.grid[i][j].change_status(EMPTY)
+            travelerCoords = (1,1)
+            destinationCoords = (49,19)
+            grid.grid[travelerCoords[0]][travelerCoords[1]].change_status(TRAVELER)
+            grid.grid[destinationCoords[0]][destinationCoords[1]].change_status(DESTINATION)
+            grid.grid[travelerCoords[0]][travelerCoords[1]].update_theme(theme1)
+            grid.grid[destinationCoords[0]][destinationCoords[1]].update_theme(theme1)
             done = False
             isVisualStarted = False
+            initial = False
         if clearWalls.draw():
             clearWeights(grid)
             clearWallsFunc(grid)
@@ -459,6 +476,7 @@ def pathfindingScreen(screen):
             clearPathFunc(grid)
             done = False
             isVisualStarted = False
+            initial = False
         
         if isVisualStarted and not initial:
             if algorithms.text == 'Breadth-first Search':
@@ -496,12 +514,13 @@ def pathfindingScreen(screen):
                             grid.grid[i][j].change_status(RIGHT_PATH)
         
         #=============grid updates here==============
-        for i in range(grid.xCount):
-            for j in range(grid.yCount):
-                screen.blit(grid.grid[i][j].spriteArrs[2][0],grid.grid[i][j].pos)
+        if grid.theme.themeArrs:
+            for i in range(grid.xCount):
+                for j in range(grid.yCount):
+                    screen.blit(grid.grid[i][j].spriteArrs[2][0],grid.grid[i][j].pos)
 
-        moving_sprites.draw(screen)
-        moving_sprites.update(0.25)
+            moving_sprites.draw(screen)
+            moving_sprites.update(0.25)
         grid.Draw()
 
         if algorithmsMenu:
