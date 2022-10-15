@@ -446,11 +446,6 @@ def pathfindingScreen(screen):
 
                 themeMenu = False
 
-        if emre:
-            print(Dijkstra(grid,travelerCoords[0], travelerCoords[1], destinationCoords[0], destinationCoords[1]))
-            print(breadthFirstSearch(grid,travelerCoords[0], travelerCoords[1], destinationCoords[0], destinationCoords[1])[0])
-            emre = False
-
        
         if isVisualStarted and not initial:
             if bombAdded:
@@ -478,7 +473,9 @@ def pathfindingScreen(screen):
                     travelerToDest, travelerToDestPath = depthFirstSearch(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0],destinationCoords[1])
                 elif algorithms.text =='Greedy Best-first Search':
                     travelerToDest, travelerToDestPath = greedyBestSearch(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0],destinationCoords[1])
-
+                elif algorithms.text == "Dijktra's Algorithm":
+                    travelerToDest = Dijkstra(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0],destinationCoords[1])
+                    travelerToDestPath = []
                 travelerToDest.pop(0)
                 travelerToDestPath.reverse()
                             
