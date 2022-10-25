@@ -17,6 +17,11 @@ pygame.display.set_icon(icon)
 
 # Background
 background = pygame.image.load('assets/background3.png')
+anim = []
+for i in range(30):
+    anim.append(pygame.image.load('assets/mainmenu/anim1.png'))
+for i in range(6):
+    anim.append(pygame.image.load('assets/mainmenu/anim{}.png'.format(i+1)))
 
 
 
@@ -30,11 +35,12 @@ button1 = Button('Pathfinding Algorithms',300,40,(420,600),5,screen,gui_font)
 button2 = Button('Sorting Algorithms',300,40,(1920 - 720,600),5,screen,gui_font)
 exitbutton = Button('Exit',200,40,(860,820),5,screen,gui_font)
 
+currentBg = 0
+speed = 0.05
 
 # Game Loop
 running = True
 while running:
-
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -43,8 +49,12 @@ while running:
     # RGB = Red, Green, Blue
     screen.fill((0, 0, 0))
     # Background Image
-    screen.blit(background, (0, 0))
+    currentBg += speed
+    if currentBg >= len(anim):
+        currentBg = 0
+    screen.blit(anim[int(currentBg)], (0, 0))
 
+    pygame.draw.rect(screen, (0,0,0),(410,340,1100,60))
     screen.blit(text_surf,(410,340,400,40))
     screen.blit(text_surf2,(650,440,400,40))
 
