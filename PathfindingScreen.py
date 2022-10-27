@@ -156,6 +156,7 @@ class Cell(pygame.sprite.Sprite):
 
     def update_theme(self,theme):
         self.change_gridColor(theme.Color)
+        self.theme = theme
         if theme.themeArrs:
             self.animation = True
             self.spriteArrs = theme.themeArrs
@@ -166,6 +167,7 @@ class Cell(pygame.sprite.Sprite):
             self.spriteArrs = None
             self.sprites = None
             self.image = None
+        self.update_color()
 
     def check_click(self):
         global draggingTrav
@@ -266,34 +268,36 @@ class Cell(pygame.sprite.Sprite):
         elif self.status == BOMB and draggingBomb:
             action = True
         return action
-    
-    def change_status(self, status):
-        global travelerCoords
-        self.status = status
+    def update_color(self):
+        if self.animation:
+            transparency = 10
+        else:
+            transparency = 150
         if self.status == EMPTY:
-            self.change_color((255,255,255,10))
+            self.change_color((255,255,255,transparency))
         elif self.status == WALL:
-            self.change_color((20,20,20,10))
+            self.change_color((20,20,20,transparency))
         elif self.status == TRAVELER:
             travelerCoords = (self.i,self.j)
-            self.change_color((255,0,255,200))
+            self.change_color((255,0,255,transparency))
         elif self.status == RIGHT_PATH:
-            self.change_color((255,0,0,200))
+            self.change_color((255,255,0,100),99)
         elif self.status == DESTINATION:
-            self.change_color((0,255,255,10))
+            self.change_color((0,255,255,transparency))
         elif self.status == BOMB:
-            self.change_color((255,0,0,10))
+            self.change_color((255,0,0,transparency))
         elif self.status == TRIED:
             self.change_color((127,127,255,100),99)
         elif self.status == TRIED2:
-            self.change_color((0,0,255,200))
+            self.change_color((0,0,255,100),99)
         elif self.status == WEIGHTEDNOD:
-            self.change_color((0,0,255,10))
-        elif self.status == RIGHT_PATH:
-            self.change_color((255,255,0,100),99)
+            self.change_color((0,0,255,transparency))
         elif self.status == FAKE_TRAVELER:
-            self.change_color((255,0,255,10))
-        
+            self.change_color((255,0,255,transparency//2),transparency//2-1)
+    def change_status(self, status):
+        global travelerCoords
+        self.status = status
+        self.update_color()
         self.update_theme(self.theme)
 
 
@@ -396,7 +400,7 @@ def pathfindingScreen(screen):
 
     #algorithms dropdown menu items
     
-    algorithmsDropDown = dropdownmenu(['Breadth-first Search','Depth-first Search','A* Search','Greedy Best-first Search','Swarm Algorithm','Convergent Swarm Algorithm','Bidirectional Swarm Algorithm',"Dijktra's Algorithm"],(1410,310),screen,40,300,gui_font)
+    algorithmsDropDown = dropdownmenu(['Breadth-first Search','Depth-first Search','A* Search','Greedy Best-first Search',"Dijktra's Algorithm"],(1410,310),screen,40,300,gui_font)
     speedDropDown = dropdownmenu(["Slow","Average","Fast"],(190,310), screen,40,300,gui_font)
     themeDropDown = dropdownmenu(["theme 1","theme 2","theme 3"],(1120,310), screen,40,300,gui_font)
     mazesAndPatternsDropDown = dropdownmenu(["Recursive Division","Recursive Division (vertical skew)","Recursive Division (horizontal skew)","Basic Random Maze","Basic Weight Maze","Simple Stair Pattern"],(500,310), screen,40,360,gui_font)
@@ -427,6 +431,8 @@ def pathfindingScreen(screen):
 
         if backward.draw():
             running = False
+            isVisualStarted = False
+            initial = True
             return True
         if start.draw() and not isVisualStarted:
             current = travelerCoords
@@ -588,8 +594,8 @@ def pathfindingScreen(screen):
                 startRecursionMaze = False
 
 
-       
         if isVisualStarted and not initial:
+
             if bombAdded:
                 if algorithms.text == 'Breadth-first Search':
                     
@@ -625,7 +631,13 @@ def pathfindingScreen(screen):
                             
             initial = True
         
+
+        
         if isVisualStarted and initial:
+            for i in range(grid.xCount):
+                for j in range(grid.yCount):
+                    if grid.grid[i][j].status == FAKE_TRAVELER:
+                        grid.grid[i][j].change_status(RIGHT_PATH)
             pygame.time.wait(speedValue)
             if bombAdded:
                 if travelerToBomb:
@@ -635,17 +647,17 @@ def pathfindingScreen(screen):
                     grid.grid[bombToDest[0][0]][bombToDest[0][1]].change_status(TRIED2)
                     bombToDest.pop(0)
                 elif travelerToBombPath:
-                    grid.grid[travelerToBombPath[0][0]][travelerToBombPath[0][1]].change_status(RIGHT_PATH)
+                    grid.grid[travelerToBombPath[0][0]][travelerToBombPath[0][1]].change_status(FAKE_TRAVELER)
                     travelerToBombPath.pop(0)
                 elif bombToDestPath:
-                    grid.grid[bombToDestPath[0][0]][bombToDestPath[0][1]].change_status(RIGHT_PATH)
+                    grid.grid[bombToDestPath[0][0]][bombToDestPath[0][1]].change_status(FAKE_TRAVELER)
                     bombToDestPath.pop(0)
             else:
                 if travelerToDest:
                     grid.grid[travelerToDest[0][0]][travelerToDest[0][1]].change_status(TRIED)
                     travelerToDest.pop(0)
                 elif travelerToDestPath:
-                    grid.grid[travelerToDestPath[0][0]][travelerToDestPath[0][1]].change_status(RIGHT_PATH)
+                    grid.grid[travelerToDestPath[0][0]][travelerToDestPath[0][1]].change_status(FAKE_TRAVELER)
                     travelerToDestPath.pop(0)
 
             
