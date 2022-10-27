@@ -486,8 +486,8 @@ def pathfindingScreen(screen):
             destinationCoords = (49,19)
             grid.grid[travelerCoords[0]][travelerCoords[1]].change_status(TRAVELER)
             grid.grid[destinationCoords[0]][destinationCoords[1]].change_status(DESTINATION)
-            grid.grid[travelerCoords[0]][travelerCoords[1]].update_theme(theme1)
-            grid.grid[destinationCoords[0]][destinationCoords[1]].update_theme(theme1)
+            grid.grid[travelerCoords[0]][travelerCoords[1]].update_theme(grid.theme)
+            grid.grid[destinationCoords[0]][destinationCoords[1]].update_theme(grid.theme)
             done = False
             isVisualStarted = False
             initial = False
