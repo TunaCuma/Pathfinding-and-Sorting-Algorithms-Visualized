@@ -1,9 +1,11 @@
+from copyreg import dispatch_table
 from inspect import stack
 from pathlib import Path
 from pickle import FALSE
 from queue import PriorityQueue
 from re import S
 from telnetlib import DET
+from tkinter import HORIZONTAL, VERTICAL
 from turtle import Turtle
 import random
 import pygame
@@ -396,7 +398,7 @@ def pathfindingScreen(screen):
 
     #algorithms dropdown menu items
     
-    algorithmsDropDown = dropdownmenu(['Breadth-first Search','Depth-first Search','A* Search','Greedy Best-first Search','Swarm Algorithm','Convergent Swarm Algorithm','Bidirectional Swarm Algorithm',"Dijktra's Algorithm"],(1410,310),screen,40,300,gui_font)
+    algorithmsDropDown = dropdownmenu(['Breadth-first Search','Depth-first Search','A* Search','Greedy Best-first Search',"Dijkstra's Algorithm"],(1410,310),screen,40,300,gui_font)
     speedDropDown = dropdownmenu(["Slow","Average","Fast"],(190,310), screen,40,300,gui_font)
     themeDropDown = dropdownmenu(["theme 1","theme 2","theme 3"],(1120,310), screen,40,300,gui_font)
     mazesAndPatternsDropDown = dropdownmenu(["Recursive Division","Recursive Division (vertical skew)","Recursive Division (horizontal skew)","Basic Random Maze","Basic Weight Maze","Simple Stair Pattern"],(500,310), screen,40,360,gui_font)
@@ -404,7 +406,6 @@ def pathfindingScreen(screen):
     
     initial = False
     global bombAdded
-    emre = True
     while running:
         msElapsed = clock.tick(60)
         
@@ -603,9 +604,12 @@ def pathfindingScreen(screen):
                 elif algorithms.text == 'Greedy Best-first Search':
                     travelerToBomb, travelerToBombPath = greedyBestSearch(grid, travelerCoords[0], travelerCoords[1],bombCoords[0], bombCoords[1])
                     bombToDest, bombToDestPath = greedyBestSearch(grid,bombCoords[0], bombCoords[1], destinationCoords[0], destinationCoords[1])
+                elif algorithms.text == "Dijkstra's Algorithm":
+                    travelerToBomb, travelerToBombPath = Dijkstra(grid, travelerCoords[0], travelerCoords[1],bombCoords[0], bombCoords[1])
+                    bombToDest, bombToDestPath = Dijkstra(grid,bombCoords[0], bombCoords[1], destinationCoords[0], destinationCoords[1])
                 elif algorithms.text == 'A* Search':
-                    travelerToBomb, travelerToBombPath = aStar(grid, travelerCoords[0], travelerCoords[1],bombCoords[0], bombCoords[1])
-                    bombToDest, bombToDestPath = aStar(grid, travelerCoords[0], travelerCoords[1],bombCoords[0], bombCoords[1])
+                    travelerToBomb, travelerToBombPath = aStar(grid, travelerCoords,bombCoords)
+                    bombToDest, bombToDestPath = aStar(grid, bombCoords,destinationCoords)
                 travelerToBomb.pop(0)
                 bombToDest.pop(0)
                 travelerToBombPath.reverse()
@@ -617,10 +621,11 @@ def pathfindingScreen(screen):
                     travelerToDest, travelerToDestPath = depthFirstSearch(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0],destinationCoords[1])
                 elif algorithms.text =='Greedy Best-first Search':
                     travelerToDest, travelerToDestPath = greedyBestSearch(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0],destinationCoords[1])
-                elif algorithms.text == "Dijktra's Algorithm":
+                elif algorithms.text == "Dijkstra's Algorithm":
                     travelerToDest , travelerToDestPath = Dijkstra(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0],destinationCoords[1])
                 elif algorithms.text == 'A* Search':
                     travelerToDest, travelerToDestPath = aStar(grid, travelerCoords, destinationCoords)
+                travelerToDest.pop(0)
                 travelerToDestPath.reverse()
                             
             initial = True
@@ -826,13 +831,27 @@ def greedyBestSearch(grid,startX, startY, endX, endY):
                     absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] = 1
                     greedyBestSearchTraversalOrder.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
                     stack.append((current[0] + coordinate[0] , current[1] + coordinate[1]))
-                    return True
-                elif grid.grid[current[0] + coordinate[0]][current[1] + coordinate[1]].status == DESTINATION :
-                    return False
-    return False
+                    cache[current[0] + coordinate[0]][current[1] + coordinate[1]] = cache[current[0]][current[1]] + 1
+                    break
+                elif absGrid[current[0] + coordinate[0]][current[1] + coordinate[1]] == 2:
+                    isReached = True
+                    break
+        
+    path = []
 
-HORIZONTAL = 1
-VERTICAL = 0
+    while cache[current[0]][current[1]] != 0:
+        path.append(current)
+
+        for coordinate in coordinates:
+            if current[0] + coordinate[0] > -1 and current[1] + coordinate[1] > -1 and current[1] + coordinate[1] < 21 and current[0] + coordinate[0]< 51 :
+                if cache[current[0] + coordinate[0]][current[1] + coordinate[1]] == cache[current[0]][current[1]] - 1:
+                    current = (current[0] + coordinate[0], current[1] + coordinate[1])
+                    break
+
+    return greedyBestSearchTraversalOrder, path
+
+HORIZONTAL = 0
+VERTICAL = 1
 
 def choiceOfWay(skewAmount,horizontalOdds = 50):
     horizontalOdds += skewAmount
