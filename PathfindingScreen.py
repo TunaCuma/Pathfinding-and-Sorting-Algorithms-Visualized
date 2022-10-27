@@ -10,6 +10,7 @@ import pygame
 from button import Button
 from dropdownmenu import dropdownmenu
 from theme import Theme
+import math
 
 EMPTY = 0
 WALL = 1
@@ -602,7 +603,9 @@ def pathfindingScreen(screen):
                 elif algorithms.text == 'Greedy Best-first Search':
                     travelerToBomb, travelerToBombPath = greedyBestSearch(grid, travelerCoords[0], travelerCoords[1],bombCoords[0], bombCoords[1])
                     bombToDest, bombToDestPath = greedyBestSearch(grid,bombCoords[0], bombCoords[1], destinationCoords[0], destinationCoords[1])
-
+                elif algorithms.text == 'A* Search':
+                    travelerToBomb, travelerToBombPath = aStar(grid, travelerCoords[0], travelerCoords[1],bombCoords[0], bombCoords[1])
+                    bombToDest, bombToDestPath = aStar(grid, travelerCoords[0], travelerCoords[1],bombCoords[0], bombCoords[1])
                 travelerToBomb.pop(0)
                 bombToDest.pop(0)
                 travelerToBombPath.reverse()
@@ -616,7 +619,8 @@ def pathfindingScreen(screen):
                     travelerToDest, travelerToDestPath = greedyBestSearch(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0],destinationCoords[1])
                 elif algorithms.text == "Dijktra's Algorithm":
                     travelerToDest , travelerToDestPath = Dijkstra(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0],destinationCoords[1])
-                travelerToDest.pop(0)
+                elif algorithms.text == 'A* Search':
+                    travelerToDest, travelerToDestPath = aStar(grid, travelerCoords, destinationCoords)
                 travelerToDestPath.reverse()
                             
             initial = True
@@ -983,7 +987,7 @@ def Dijkstra(grid,startX, startY, endX, endY):
                     pq.put((distances[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]], (current[1][0] + coordinate[0],current[1][1] + coordinate[1])))
                     DijkstraTraversalOrder.append((current[1][0] + coordinate[0],current[1][1] + coordinate[1]))
             elif current[1][0] + coordinate[0] == endX and current[1][1] + coordinate[1] == endY:
-                distances[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]] = current[0] + absGraph[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]];
+                distances[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]] = current[0] + absGraph[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]]
                 isReached = True
     
 
@@ -997,3 +1001,49 @@ def Dijkstra(grid,startX, startY, endX, endY):
                     break
 
     return DijkstraTraversalOrder, path
+
+
+
+
+
+def aStar(grid, start, end):
+    frontier = PriorityQueue()
+    frontier.put((0, start))
+    came_from = dict()
+    distances = [[10000 for x in range(grid.yCount )] for x in range(grid.xCount)]
+    distances[start[0]][start[1]] = 0
+    came_from[start] = None
+    absGraph = createAbsGraph(grid,end[0],end[1])
+    aStarTraversal = []
+
+    coordinates = [[0,1],[0,-1],[1,0],[-1,0]]
+    isReached = False
+    while not frontier.empty() and not isReached:
+        current = frontier.get()
+        aStarTraversal.append(current[1])
+
+        if current[1] == end:
+            break
+        
+
+        for coordinate in coordinates:
+            if current[1][0] + coordinate[0] > -1 and current[1][1] + coordinate[1] > -1 and current[1][1] + coordinate[1] < 21 and current[1][0] + coordinate[0]< 51 and absGraph[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]] > 0:
+                if distances[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]] > distances[current[1][0]][current[1][1]] + absGraph[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]]:
+                    distances[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]] = distances[current[1][0]][current[1][1]] + absGraph[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]]
+                    priority = distances[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]] + abs(end[0] - (current[1][0] + coordinate[0])) + abs(end[1] - (current[1][1] + coordinate[1]))
+                    frontier.put((priority, (current[1][0] + coordinate[0],current[1][1] + coordinate[1])))
+                    came_from[(current[1][0] + coordinate[0],current[1][1] + coordinate[1])] = (current[1])
+            elif current[1][0] + coordinate[0] == end[0] and current[1][1] + coordinate[1] == end[1]:
+                distances[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]] = current[0] + absGraph[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]]
+                isReached = True
+
+    path = []
+    pathTemp = current[1]
+    while came_from[pathTemp]:
+        path.append(pathTemp)
+        pathTemp = came_from[pathTemp]
+    
+    return aStarTraversal , path
+        
+
+    
