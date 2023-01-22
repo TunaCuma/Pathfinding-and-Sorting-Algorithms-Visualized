@@ -1,4 +1,5 @@
-from mimetypes import init
+"""Module for Sorting screen loop"""
+
 import random
 import pygame
 from dropdownmenu import dropdownmenu
@@ -14,7 +15,7 @@ bubbleSortStarted = False
 
 from button import Button
 class SliderBall:
-    def __init__(self,x,y,width,screen,color, rect) -> None:
+    def __init__(self,x,y,width,screen,color, rect):
         self.x = x
         self.y = y
         self.startPos = (x,y)
@@ -90,7 +91,8 @@ class Column:
 
 
 
-def sortingScreen(screen):
+def sortingScreen(screen) -> bool:
+    """Main function of the module. Returns boolean when the loop ends. Returns false if the total program should be closed. Returns true otherwise."""
     global columns
     global quickSortStarted,mergeSortStarted,heapSortStarted,bubbleSortStarted
     running = True
@@ -231,7 +233,7 @@ def sortingScreen(screen):
                 quickSortStarted = True
                 isVisualStarted = False
             if algoToUse == "Merge Sort":
-                mergeSort(columns, 0)
+                b = mergeSort(columns, 0, columnAmount-1)
                 mergeSortStarted = True
                 isVisualStarted = False
             if algoToUse == "Heap Sort":
@@ -252,7 +254,7 @@ def sortingScreen(screen):
                 finish = True
                 quickSortStarted = False
 
-        if mergeSortStarted and False:
+        if mergeSortStarted: #and False:
             try:
                 next(b)
             except StopIteration:
@@ -289,6 +291,7 @@ def sortingScreen(screen):
                 finish = False
 
         pygame.display.update()
+    return True
 
 def turnOffSorts():
     global quickSortStarted,mergeSortStarted,heapSortStarted,bubbleSortStarted
@@ -319,69 +322,76 @@ def partition(columns, start, end, columnColor):
             low = low + 1
 
         if low <= high:
+            yield
             replaceColumns(columns,low,high)
         else:
             break
 
     replaceColumns(columns,start,high)
-    return high
+    yield high
 
 def quick_sort(columns, start, end, columnColor):
     if start >= end:
         return
-
+    run = True
     p = partition(columns, start, end, columnColor)
 
-    yield
-
-    funcs = [quick_sort(columns, start, p-1, columnColor),quick_sort(columns, p+1, end, columnColor)]
-
-    for func in funcs:
+    while run:
         try:
-            yield from func
+            yield
+            a = next(p)
+            if a != None:
+                funcs = [quick_sort(columns, start, a-1, columnColor),quick_sort(columns, a+1, end, columnColor)]
+
+                for func in funcs:
+                    try:
+                        yield from func
+                    except StopIteration:
+                        pass
+        except StopIteration:
+            run = False
+
+def merge(columns, start, mid, end):
+    start2 = mid + 1
+    # If the direct merge is already sorted
+    if (columns[mid].height <= columns[start2].height):
+        return
+    # Two pointers to maintain start
+    # of both columnsays to merge
+    while (start <= mid and start2 <= end):
+        # If element 1 is in right place
+        if (columns[start].height <= columns[start2].height):
+            start += 1
+        else:
+            #value = columns[start2].height
+            index = start2
+            while (index != start):
+                #columns[index].height = columns[index - 1].height
+                replaceColumns(columns,index,index-1)
+                index -= 1
+            #columns[start].height = value
+            replaceColumns(columns,start2,start)
+            start += 1
+            mid += 1
+            start2 += 1
+def mergeSort(columns, l, r):
+    if (l < r):
+        # Same as (l + r) / 2, but avoids overflow
+        # for large l and r
+        m = l + (r - l) // 2
+        # Sort first and second halves
+        m1 = mergeSort(columns, l, m)
+        try:
+            next(m1)
         except StopIteration:
             pass
-
-def mergeSort(arr, plus):#it doesnt work for now
-    global columns
-    print(len(arr))
-    if len(arr) > 1:
-        mid = len(arr)//2
-        L = arr[:mid]
-        R = arr[mid:]
-
-        mergeSort(L, plus)
-        mergeSort(R, plus+mid)
-
-        i = j = k = 0
-
-        while i < len(L) and j < len(R):
-            if L[i].height < R[j].height:
-                #columns[k] = L[i]
-                #replaceColumns(orginalColumns,k+plus,i+plus)
-                i += 1
-            else:
-                #columns[k] = R[j]
-                for a in range(j-k):
-                    replaceColumns(columns,(j+plus+mid)-a,(j+plus+mid)-a-1)
-                    
-                j += 1
-            k += 1
-        
-        while i < len(L):
-            #columns[k] = L[i]
-            #replaceColumns(orginalColumns,k+plus,i+plus)
-            i += 1
-            k += 1
-        
-        while j < len(R):
-            #columns[k] = R[j]
-            for a in range(j-k):
-                replaceColumns(columns,(j+plus+mid)-a,(j+plus+mid)-a-1)
-                
-            j += 1
-            k += 1
-        
+        m2 = mergeSort(columns, m + 1, r)
+        try:
+            next(m1)
+        except StopIteration:
+            pass
+        merge(columns, l, m, r)
+    yield
 
 def heapify(columns, n, i):
     largest = i

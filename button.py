@@ -1,7 +1,7 @@
-from argparse import Action
 import pygame
 
 class Button:
+    """Basic animated button class."""
     def __init__(self,text,width,height,pos,elevation,screen,gui_font,img = None):
         #Core attributes 
         self.pressed = False
@@ -25,6 +25,7 @@ class Button:
         self.text_rect = self.text_surf.get_rect(center = self.top_rect.center)
 
     def draw(self):
+        """Draws button. Returns true if clicked."""
         # elevation logic
         self.text_surf = self.gui_font.render(self.text,True,'#000000')
         self.text_rect = self.text_surf.get_rect(center = self.top_rect.center)

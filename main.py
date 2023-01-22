@@ -1,4 +1,3 @@
-from turtle import backward
 import pygame
 from button import Button
 import PathfindingScreen
@@ -15,7 +14,7 @@ pygame.display.set_caption("Visualized Algorithms")
 icon = pygame.image.load('assets/icon.png')
 pygame.display.set_icon(icon)
 
-# Background
+# Background animation
 background = pygame.image.load('assets/background3.png')
 anim = []
 for i in range(30):
@@ -50,7 +49,7 @@ while running:
     screen.fill((0, 0, 0))
     # Background Image
     currentBg += speed
-    if currentBg >= len(anim):
+    if currentBg >= len(anim): #Background animation
         currentBg = 0
     screen.blit(anim[int(currentBg)], (0, 0))
 
