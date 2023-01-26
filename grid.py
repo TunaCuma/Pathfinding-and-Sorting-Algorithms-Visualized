@@ -13,6 +13,7 @@ class Grid(object):
         self.draggingTrav = False
         self.draggingDest = False
         self.draggingBomb = False
+        self.initializedPaths = False
         self.xCount = xc
         self.yCount = yc
         self.cellSize = csize
@@ -41,7 +42,20 @@ class Grid(object):
                 self.grid[i].append(Cell(self.cellSize, (0,0,0,0), self.win, self.pos[0]+(self.cellSize*i), self.pos[1]+(self.cellSize*j),i,j,self.theme,self))
                 self.moving_sprites.add(self.grid[i][j])
         self.update_theme(self.theme)
-
+    def getFirstCell(self,cellTypeToFind):
+        for i in range(self.xCount):
+            for j in range(self.yCount):
+                if self.grid[i][j].status == cellTypeToFind:
+                    return self.grid[i][j]
+    def replaceAll(self,oldCellType,newCellType):
+        for i in range(self.xCount):
+            for j in range(self.yCount):
+                if self.grid[i][j].status == oldCellType:
+                    self.grid[i][j].change_status(newCellType)
+    def animate(self,screen):
+        for i in range(self.xCount):
+            for j in range(self.yCount):
+                screen.blit(self.grid[i][j].spriteArrs[2][0],self.grid[i][j].pos)
     def initilazeDestinationAndTraveler(self,travelerCoords,destinationCoords):
         self.travelerCoords = travelerCoords
         self.destinationCoords = destinationCoords

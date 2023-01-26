@@ -6,10 +6,8 @@ height = 30
 class Theme:
     """This class just holds theme information to be accessed later. Should be used to have changeable themes."""
     backwardImg = pygame.image.load('assets/backwards.png')
-    def __init__(self, background, Color, themeNum):
-        self.background = background
-        self.Color = Color
-        self.themeNum = themeNum
+    def __init__(self,themeNum):
+        
         #Choosing animation frames based on theme number.
         if themeNum == 0:
 
@@ -22,16 +20,22 @@ class Theme:
 
             self.themeArrs = [boatSprites,islandSprites,seaSprites,rocksSprites,seaMineSprites]
             self.background = pygame.image.load('assets/background5.png')
+            self.Color = (255,255,255)
 
         elif themeNum == 1:
             self.themeArrs = None
             self.background = pygame.image.load('assets/background2.png')
+            self.Color = (30,30,160)
         elif themeNum == 2:
             self.themeArrs = None
             self.background = pygame.image.load('assets/background3.png')
+            self.Color = (180,188,188)
         else:
             self.themeArrs = None
             self.background = pygame.image.load('assets/background3.png')
+            self.Color = (180,188,188)
+
+
     def initilazeFrames(self,themeName,fileName,frameAmount):
         sprites = []
         for i in range(frameAmount):

@@ -9,10 +9,10 @@ from theme import Theme
 from grid import Grid
 from constants import *
 
+
+
 def pathfindingScreen(screen) -> bool:
     """Main function of the module. Returns boolean when the loop ends. Returns false if the total program should be closed. Returns true otherwise."""
-    
-    running = True
     
     #Initilazing clock
     clock = pygame.time.Clock()
@@ -25,10 +25,12 @@ def pathfindingScreen(screen) -> bool:
     moving_sprites = pygame.sprite.Group()
 
     #Initilazing settings
-    backgroundToUse = theme1.background
     algoToUse = 'Breadth-first Search'
-    speedValue = "Fast"
-    themeToUse = "theme 1"
+    speedValue = 1
+    themeToUse = "Sea Theme"
+    selectedMaze = None
+    startFraming = False
+    startRecursionMaze = False
 
     #Initilazing fonts
     gui_font = pygame.font.Font(None,30)
@@ -44,341 +46,322 @@ def pathfindingScreen(screen) -> bool:
     text_surf = title_font.render("Pathfinding Visualizer",True,'#FFFFFF')
 
     #Initilazing Buttons
-    backward = Button('',Theme.backwardImg.get_rect().width,Theme.backwardImg.get_rect().height,(200,120),5,screen,gui_font,Theme.backwardImg)
-    start = Button('START THE VISUAL!',300,90,(810,210),5,screen,gui_font)
-    algorithms  = Button('Breadth-first Search',300,40,(1430,260),5,screen,gui_font)
-    mazesAndPatterns = Button('Mazes And Patterns',300,40,(500,260),5,screen,gui_font)
-    addBomb = Button('Add Bomb',300,40,(190,210),5,screen,gui_font)
-    clearGrid = Button('Clear Grid',300,40,(1120,210),5,screen,gui_font)
-    clearWalls = Button('Clear Walls and Weights',300,40,(1430,210),5,screen,gui_font)
-    clearPath = Button('Clear Path',300,40,(500,210),5,screen,gui_font)
-    speed = Button('Speed: Fast',300,40,(190,260),5,screen,gui_font)
-    theme = Button('theme 1',300,40,(1120,260),5,screen,gui_font)
+    backwardButton = Button('',Theme.backwardImg.get_rect().width,Theme.backwardImg.get_rect().height,(200,120),5,screen,gui_font,Theme.backwardImg)
+    startButton = Button('START THE VISUAL!',300,90,(810,210),5,screen,gui_font)
+    algorithmsButton  = Button(algoToUse,300,40,(1430,260),5,screen,gui_font)
+    mazesAndPatternsButton = Button('Mazes And Patterns',300,40,(500,260),5,screen,gui_font)
+    addBombButton = Button('Add Bomb',300,40,(190,210),5,screen,gui_font)
+    clearGridButton = Button('Clear Grid',300,40,(1120,210),5,screen,gui_font)
+    clearWallsButton = Button('Clear Walls and Weights',300,40,(1430,210),5,screen,gui_font)
+    clearPathButton = Button('Clear Path',300,40,(500,210),5,screen,gui_font)
+    speedButton = Button('Speed: Fast',300,40,(190,260),5,screen,gui_font)
+    themeButton = Button(themeToUse,300,40,(1120,260),5,screen,gui_font)
 
     #Initilazing dropdown menus
-    algorithmsDropDown = dropdownmenu(['Breadth-first Search','Depth-first Search','A* Search','Greedy Best-first Search',"Dijktra's Algorithm"],(1410,310),screen,40,300,gui_font)
-    speedDropDown = dropdownmenu(["Slow","Average","Fast"],(190,310), screen,40,300,gui_font)
-    themeDropDown = dropdownmenu(["theme 1","theme 2","theme 3"],(1120,310), screen,40,300,gui_font)
-    mazesAndPatternsDropDown = dropdownmenu(["Recursive Division","Recursive Division (vertical skew)","Recursive Division (horizontal skew)","Basic Random Maze","Basic Weight Maze","Simple Stair Pattern"],(500,310), screen,40,360,gui_font)
-
-    #TODO organize and simplify these ucube variables
-    mazesAndPatternsToUse = None
-    algorithmsMenu = False
-    mazesAndPatternsMenu = False
-    speedMenu = False
-    themeMenu = False
-    startFraming = False
-    startRecursionMaze = False
+    algorithmChoices = ['Breadth-first Search','Depth-first Search','A* Search','Greedy Best-first Search',"Dijktra's Algorithm"]
+    speedChoices = ["Slow","Average","Fast"]
+    themeChoices = ["Sea Theme","Space Theme","Pastel Theme"]
+    mazesAndPatternsChoices = ["Recursive Division","Recursive Division (vertical skew)","Recursive Division (horizontal skew)","Basic Random Maze","Basic Weight Maze","Simple Stair Pattern"]
+    
     dropdownmenu.dropdownIsOpen = False
+    dropdownmenu.dropdowns = []
+
+    algorithmsDropDown = dropdownmenu(algorithmChoices,(1410,310),screen,40,300,gui_font)
+    speedDropDown = dropdownmenu(speedChoices,(190,310), screen,40,300,gui_font)
+    themeDropDown = dropdownmenu(themeChoices,(1120,310), screen,40,300,gui_font)
+    mazesAndPatternsDropDown = dropdownmenu(mazesAndPatternsChoices,(500,310), screen,40,360,gui_font)
+
     menuSurface = pygame.Surface((1860,325), pygame.SRCALPHA)
-    done = False
-    current = grid.travelerCoords
-    searchQueue = [current]
-    
-    waitTillOne = 0
-    speedValue = 1
+    grid.initializedPaths = False
 
-
-    
-    initial = False
-    while running:
-        msElapsed = clock.tick(60)
-        
-        #true if any dropdown is open
-        dropdownmenu.dropdownIsOpen = algorithmsMenu or mazesAndPatternsMenu or speedMenu or themeMenu
-        
-        #Close total program if close button is pressed
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-                return False
-
-        #Draw background
-        screen.blit(backgroundToUse, (0, 0))
-        pygame.draw.rect(menuSurface,(180,188,188,150),(180,0,1860,325))
-        pygame.draw.rect(menuSurface,(250,245,245,190),(180,0,1860,325),2)
-        screen.blit(menuSurface, (0,0))
-        screen.blit(text_surf,(780,140,400,40))
-
-
-
-        #=========drawing and checking buttons============
-        if backward.draw():
-            running = False
-            isVisualStarted = False
-            initial = True
+    # a helper function to simplify the loop below
+    def drawButtons():
+        if backwardButton.draw():
             return True
 
-        if start.draw() and not isVisualStarted:
-            current = grid.travelerCoords
-            searchQueue = [current]
-            isVisualStarted = True
-            initial = False
+        if startButton.draw() and not grid.isVisualStarted:
+            grid.isVisualStarted = True
+            grid.initializedPaths = False
 
-        if algorithms.draw():
-            algorithmsMenu = not algorithmsMenu
-            mazesAndPatternsMenu = False
-            speedMenu = False
-            themeMenu = False
+        if algorithmsButton.draw():
+            algorithmsDropDown.reveal()
 
-        if mazesAndPatterns.draw():
-            mazesAndPatternsMenu = not mazesAndPatternsMenu
-            algorithmsMenu = False
-            speedMenu = False
-            themeMenu = False
+        if mazesAndPatternsButton.draw():
+            mazesAndPatternsDropDown.reveal()
 
-        if speed.draw():
-            speedMenu = not speedMenu
-            algorithmsMenu = False
-            mazesAndPatternsMenu = False
-            themeMenu = False
+        if speedButton.draw():
+            speedDropDown.reveal()
 
-        if theme.draw():
-            themeMenu = not themeMenu
-            algorithmsMenu = False
-            mazesAndPatternsMenu = False
-            speedMenu = False
+        if themeButton.draw():
+            themeDropDown.reveal()
 
-        if addBomb.draw():
-            if not bombAdded:
-                for i in range(grid.xCount):
-                    for j in range(grid.yCount):
-                        if grid.grid[i][j].status == EMPTY and not bombAdded:
-                            grid.grid[i][j].change_status(BOMB)
-                            bombAdded = True
-                            break
+        if addBombButton.draw() and not grid.isVisualStarted and not startRecursionMaze:
+            if not grid.bombAdded:
+                grid.getFirstCell(EMPTY).change_status(BOMB)
             else:
-                for i in range(grid.xCount):
-                    for j in range(grid.yCount):
-                        if grid.grid[i][j].status == BOMB and bombAdded:
-                            grid.grid[i][j].change_status(EMPTY)
-                            bombAdded = False
-                            break
+                grid.getFirstCell(BOMB).change_status(EMPTY)
+            grid.bombAdded = not grid.bombAdded
 
-        if clearGrid.draw():
+        if clearGridButton.draw():
             grid.emptyGrid()
-            grid.InitilazeDestinationAndTraveler((1,1),(49,19))
-            done = False
-            isVisualStarted = False
-            initial = False
-            bombAdded = False
+            grid.initilazeDestinationAndTraveler((1,1),(49,19))
+            grid.isVisualStarted = False
+            grid.initializedPaths = False
+            grid.bombAdded = False
 
-        if clearWalls.draw():
+        if clearWallsButton.draw():
             clearWeights(grid)
             clearWallsFunc(grid)
 
-        if clearPath.draw():
+        if clearPathButton.draw():
             clearPathFunc(grid)
-            done = False
-            isVisualStarted = False
-            initial = False
+
+
+    #========Main loop of this method============
+    while True:
+        clock.tick(60) #setting fps to 60
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False
         
-        
-        
-        #=============grid updates here==============
-        if grid.theme.themeArrs:
-            for i in range(grid.xCount):
-                for j in range(grid.yCount):
-                    screen.blit(grid.grid[i][j].spriteArrs[2][0],grid.grid[i][j].pos)
-            moving_sprites.draw(screen)
-            moving_sprites.update(0.25)
-        grid.Draw()
+        drawBackground(grid.theme,menuSurface,text_surf,screen)
+        if drawButtons():
+            return True
+        updateGrid(grid,screen,moving_sprites)
 
         #=========drawing and checking dropdown menus============
-        if algorithmsMenu:
-            algoToUsetemp = algorithmsDropDown.Draw()
-            if algoToUsetemp != -1:
-                algorithms.text = algoToUsetemp
-                algorithmsMenu = False
+        if dropdownmenu.dropdownIsOpen:
+            if algorithmsDropDown.isOpen:
+                algoToUsetemp = algorithmsDropDown.Draw()
+                if algoToUsetemp != -1:
+                    algorithmsButton.text = algoToUsetemp
+                    algorithmsDropDown.reveal()
+            elif mazesAndPatternsDropDown.isOpen:
+                selectedMazeTemp = mazesAndPatternsDropDown.Draw()
+                if selectedMazeTemp != -1:
+                    clearWallsFunc(grid)
+                    clearWeights(grid)
+                    clearPathFunc(grid)
+                    
+                    selectedMaze = selectedMazeTemp
+                    mazesAndPatternsDropDown.reveal()
+                    
+                    #frame and recursion maze functions are generators
+                    if selectedMaze == "Recursive Division":
+                        startFraming = True
+                        startRecursionMaze = True
+                        f = frame(grid,51,21)
+                        rM = RecursionMaze(grid,1,49,1,19)
+                    elif selectedMaze == "Recursive Division (vertical skew)":
+                        startFraming = True
+                        startRecursionMaze = True
+                        f = frame(grid,51,21)
+                        rM = RecursionMaze(grid,1,49,1,19,VERTICAL)
+                    elif selectedMaze == "Recursive Division (horizontal skew)":
+                        startFraming = True
+                        startRecursionMaze = True
+                        f = frame(grid,51,21)
+                        rM = RecursionMaze(grid,1,49,1,19,HORIZONTAL)
+                    elif selectedMaze == "Basic Random Maze":
+                        basicMaze(grid)
+                    elif selectedMaze == "Basic Weight Maze":
+                        basicWeighted(grid)
+                    elif selectedMaze == "Simple Stair Pattern":
+                        stairsPattern(grid)
+            elif speedDropDown.isOpen:
+                speedValuetemp = speedDropDown.Draw()
+                if speedValuetemp != -1:
+                    speedButton.text = "Speed: " + speedValuetemp
+                    if speedValuetemp == "Fast":
+                        speedValue = 1
+                    elif speedValuetemp == "Average":
+                        speedValue = 15
+                    elif speedValuetemp == "Slow":
+                        speedValue = 50
+                    speedDropDown.reveal()
+            elif themeDropDown.isOpen:
+                themeToUsetemp = themeDropDown.Draw()
+                if themeToUsetemp != -1:
+                    themeButton.text = themeToUsetemp
+                    themeToUse = themeToUsetemp
+                    if themeToUse == "Sea Theme":
+                        grid.update_theme(theme1)
+                    elif themeToUse == "Space Theme":
+                        grid.update_theme(theme2)
+                    elif themeToUse == "Pastel Theme":
+                        grid.update_theme(theme3)
+                    themeDropDown.reveal()
 
-        if mazesAndPatternsMenu:
-            mazesAndPatternsToUsetemp = mazesAndPatternsDropDown.Draw()
-            if mazesAndPatternsToUsetemp != -1:
-                clearWallsFunc(grid)
-                clearWeights(grid)
-                clearPathFunc(grid)
-                
-                mazesAndPatternsToUse = mazesAndPatternsToUsetemp
-                mazesAndPatternsMenu = False
-                
-                #frame and recursion maze functions are generators
-                if mazesAndPatternsToUse == "Recursive Division":
-                    startFraming = True
-                    startRecursionMaze = True
-                    f = frame(grid,51,21)
-                    rM = RecursionMaze(grid,1,49,1,19)
-                elif mazesAndPatternsToUse == "Recursive Division (vertical skew)":
-                    startFraming = True
-                    startRecursionMaze = True
-                    f = frame(grid,51,21)
-                    rM = RecursionMaze(grid,1,49,1,19,VERTICAL)
-                elif mazesAndPatternsToUse == "Recursive Division (horizontal skew)":
-                    startFraming = True
-                    startRecursionMaze = True
-                    f = frame(grid,51,21)
-                    rM = RecursionMaze(grid,1,49,1,19,HORIZONTAL)
-                elif mazesAndPatternsToUse == "Basic Random Maze":
-                    basicMaze(grid)
-                elif mazesAndPatternsToUse == "Basic Weight Maze":
-                    basicWeighted(grid)
-                elif mazesAndPatternsToUse == "Simple Stair Pattern":
-                    stairsPattern(grid)
-
-        if speedMenu:
-            speedValuetemp = speedDropDown.Draw()
-            if speedValuetemp != -1:
-                speed.text = "Speed: " + speedValuetemp
-                if speedValuetemp == "Fast":
-                    speedValue = 1
-                if speedValuetemp == "Average":
-                    speedValue = 15
-                if speedValuetemp == "Slow":
-                    speedValue = 50
-                speedMenu = False
-
-        if themeMenu:
-            themeToUsetemp = themeDropDown.Draw()
-            if themeToUsetemp != -1:
-                theme.text = themeToUsetemp
-                themeToUse = themeToUsetemp
-                if themeToUse == "theme 1":
-                    backgroundToUse = theme1.background
-                    grid.update_theme(theme1)
-                elif themeToUse == "theme 2":
-                    backgroundToUse = theme2.background
-                    grid.update_theme(theme2)
-                elif themeToUse == "theme 3":
-                    backgroundToUse = theme3.background
-                    grid.update_theme(theme3)
-                themeMenu = False
-
-        #execute generators for maze & pattern algorithms
+        #execute algorithms
         if startFraming:
             try:
                 next(f)
             except StopIteration:
-                frameFinished = True
+                grid.frameFinished = True
                 startFraming = False
-        if startRecursionMaze and frameFinished:
+        elif startRecursionMaze and grid.frameFinished:
             try:
                 next(rM)
             except StopIteration:
                 startRecursionMaze = False
-
-
-        if isVisualStarted and not initial:
-
-            if bombAdded:
-                if algorithms.text == 'Breadth-first Search':
-                    
-                    travelerToBomb, travelerToBombPath = breadthFirstSearch(grid, travelerCoords[0], travelerCoords[1],grid.bombCoords[0], grid.bombCoords[1])
-                    bombToDest, bombToDestPath = breadthFirstSearch(grid,grid.bombCoords[0], grid.bombCoords[1], destinationCoords[0], destinationCoords[1])
-                    
-                elif algorithms.text == 'Depth-first Search':
-                    travelerToBomb, travelerToBombPath = depthFirstSearch(grid, travelerCoords[0], travelerCoords[1],grid.bombCoords[0], grid.bombCoords[1])
-                    bombToDest, bombToDestPath = depthFirstSearch(grid,grid.bombCoords[0], grid.bombCoords[1], destinationCoords[0], destinationCoords[1])
-
-                elif algorithms.text == 'Greedy Best-first Search':
-                    travelerToBomb, travelerToBombPath = greedyBestSearch(grid, travelerCoords[0], travelerCoords[1],grid.bombCoords[0], grid.bombCoords[1])
-                    bombToDest, bombToDestPath = greedyBestSearch(grid,grid.bombCoords[0], grid.bombCoords[1], destinationCoords[0], destinationCoords[1])
-                elif algorithms.text == "Dijkstra's Algorithm":
-                    travelerToBomb, travelerToBombPath = Dijkstra(grid, travelerCoords[0], travelerCoords[1],grid.bombCoords[0], grid.bombCoords[1])
-                    bombToDest, bombToDestPath = Dijkstra(grid,grid.bombCoords[0], grid.bombCoords[1], destinationCoords[0], destinationCoords[1])
-                elif algorithms.text == 'A* Search':
-                    travelerToBomb, travelerToBombPath = aStar(grid, travelerCoords,grid.bombCoords)
-                    bombToDest, bombToDestPath = aStar(grid, grid.bombCoords,destinationCoords)
-                travelerToBomb.pop(0)
-                bombToDest.pop(0)
-                travelerToBombPath.reverse()
-                bombToDestPath.reverse()
-            else:
-                if algorithms.text == 'Breadth-first Search':
-                    travelerToDest, travelerToDestPath = breadthFirstSearch(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0], destinationCoords[1])
-                elif algorithms.text == 'Depth-first Search':
-                    travelerToDest, travelerToDestPath = depthFirstSearch(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0],destinationCoords[1])
-                elif algorithms.text =='Greedy Best-first Search':
-                    travelerToDest, travelerToDestPath = greedyBestSearch(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0],destinationCoords[1])
-                elif algorithms.text == "Dijkstra's Algorithm":
-                    travelerToDest , travelerToDestPath = Dijkstra(grid, travelerCoords[0],travelerCoords[1],destinationCoords[0],destinationCoords[1])
-                elif algorithms.text == 'A* Search':
-                    travelerToDest, travelerToDestPath = aStar(grid, travelerCoords, destinationCoords)
-                travelerToDest.pop(0)
-                travelerToDestPath.reverse()
-                            
-            initial = True
-
-
-        if isVisualStarted and initial:
-            for i in range(grid.xCount):
-                for j in range(grid.yCount):
-                    if grid.grid[i][j].status == FAKE_TRAVELER:
-                        grid.grid[i][j].change_status(RIGHT_PATH)
-            pygame.time.wait(speedValue)
-            if bombAdded:
-                if travelerToBomb:
-                    grid.grid[travelerToBomb[0][0]][travelerToBomb[0][1]].change_status(TRIED)
+        elif grid.isVisualStarted:
+            if not grid.initializedPaths:
+                if grid.bombAdded:
+                    if algorithmsButton.text == 'Breadth-first Search':
+                        travelerToBomb, travelerToBombPath = breadthFirstSearch(grid, grid.travelerCoords[0], grid.travelerCoords[1],grid.bombCoords[0], grid.bombCoords[1])
+                        bombToDest, bombToDestPath = breadthFirstSearch(grid,grid.bombCoords[0], grid.bombCoords[1], grid.destinationCoords[0], grid.destinationCoords[1])
+                    elif algorithmsButton.text == 'Depth-first Search':
+                        travelerToBomb, travelerToBombPath = depthFirstSearch(grid, grid.travelerCoords[0], grid.travelerCoords[1],grid.bombCoords[0], grid.bombCoords[1])
+                        bombToDest, bombToDestPath = depthFirstSearch(grid,grid.bombCoords[0], grid.bombCoords[1], grid.destinationCoords[0], grid.destinationCoords[1])
+                    elif algorithmsButton.text == 'Greedy Best-first Search':
+                        travelerToBomb, travelerToBombPath = greedyBestSearch(grid, grid.travelerCoords[0], grid.travelerCoords[1],grid.bombCoords[0], grid.bombCoords[1])
+                        bombToDest, bombToDestPath = greedyBestSearch(grid,grid.bombCoords[0], grid.bombCoords[1], grid.destinationCoords[0], grid.destinationCoords[1])
+                    elif algorithmsButton.text == "Dijkstra's Algorithm":
+                        travelerToBomb, travelerToBombPath = Dijkstra(grid, grid.travelerCoords[0], grid.travelerCoords[1],grid.bombCoords[0], grid.bombCoords[1])
+                        bombToDest, bombToDestPath = Dijkstra(grid,grid.bombCoords[0], grid.bombCoords[1], grid.destinationCoords[0], grid.destinationCoords[1])
+                    elif algorithmsButton.text == 'A* Search':
+                        travelerToBomb, travelerToBombPath = aStar(grid, grid.travelerCoords,grid.bombCoords)
+                        bombToDest, bombToDestPath = aStar(grid, grid.bombCoords,grid.destinationCoords)
                     travelerToBomb.pop(0)
-                elif bombToDest:
-                    grid.grid[bombToDest[0][0]][bombToDest[0][1]].change_status(TRIED2)
                     bombToDest.pop(0)
-                elif travelerToBombPath:
-                    grid.grid[travelerToBombPath[0][0]][travelerToBombPath[0][1]].change_status(FAKE_TRAVELER)
-                    travelerToBombPath.pop(0)
-                elif bombToDestPath:
-                    grid.grid[bombToDestPath[0][0]][bombToDestPath[0][1]].change_status(FAKE_TRAVELER)
-                    bombToDestPath.pop(0)
-            else:
-                if travelerToDest:
-                    grid.grid[travelerToDest[0][0]][travelerToDest[0][1]].change_status(TRIED)
+                    travelerToBombPath.reverse()
+                    bombToDestPath.reverse()
+                else:
+                    if algorithmsButton.text == 'Breadth-first Search':
+                        travelerToDest, travelerToDestPath = breadthFirstSearch(grid, grid.travelerCoords[0],grid.travelerCoords[1],grid.destinationCoords[0], grid.destinationCoords[1])
+                    elif algorithmsButton.text == 'Depth-first Search':
+                        travelerToDest, travelerToDestPath = depthFirstSearch(grid, grid.travelerCoords[0],grid.travelerCoords[1],grid.destinationCoords[0],grid.destinationCoords[1])
+                    elif algorithmsButton.text =='Greedy Best-first Search':
+                        travelerToDest, travelerToDestPath = greedyBestSearch(grid, grid.travelerCoords[0],grid.travelerCoords[1],grid.destinationCoords[0],grid.destinationCoords[1])
+                    elif algorithmsButton.text == "Dijkstra's Algorithm":
+                        travelerToDest , travelerToDestPath = Dijkstra(grid, grid.travelerCoords[0],grid.travelerCoords[1],grid.destinationCoords[0],grid.destinationCoords[1])
+                    elif algorithmsButton.text == 'A* Search':
+                        travelerToDest, travelerToDestPath = aStar(grid, grid.travelerCoords, grid.destinationCoords)
                     travelerToDest.pop(0)
-                elif travelerToDestPath:
-                    grid.grid[travelerToDestPath[0][0]][travelerToDestPath[0][1]].change_status(FAKE_TRAVELER)
-                    travelerToDestPath.pop(0)
-
+                    travelerToDestPath.reverse()
+                                
+                grid.initializedPaths = True
+            else:
+                grid.replaceAll(FAKE_TRAVELER,RIGHT_PATH)
+                pygame.time.wait(speedValue)
+                if grid.bombAdded:
+                    if travelerToBomb:
+                        grid.grid[travelerToBomb[0][0]][travelerToBomb[0][1]].change_status(TRIED)
+                        travelerToBomb.pop(0)
+                    elif bombToDest:
+                        grid.grid[bombToDest[0][0]][bombToDest[0][1]].change_status(TRIED2)
+                        bombToDest.pop(0)
+                    elif travelerToBombPath:
+                        grid.grid[travelerToBombPath[0][0]][travelerToBombPath[0][1]].change_status(FAKE_TRAVELER)
+                        travelerToBombPath.pop(0)
+                    elif bombToDestPath:
+                        grid.grid[bombToDestPath[0][0]][bombToDestPath[0][1]].change_status(FAKE_TRAVELER)
+                        bombToDestPath.pop(0)
+                else:
+                    if travelerToDest:
+                        grid.grid[travelerToDest[0][0]][travelerToDest[0][1]].change_status(TRIED)
+                        travelerToDest.pop(0)
+                    elif travelerToDestPath:
+                        grid.grid[travelerToDestPath[0][0]][travelerToDestPath[0][1]].change_status(FAKE_TRAVELER)
+                        travelerToDestPath.pop(0)
 
         pygame.display.update()
-    return True
 
+#=========Helper functions=========
+def updateGrid(grid,screen,moving_sprites):
+    gridHaveAnimation = grid.theme.themeArrs
+    if gridHaveAnimation:
+        grid.animate(screen)
+        moving_sprites.draw(screen)
+        moving_sprites.update(0.25)
+    grid.Draw()
+def drawBackground(theme,menuSurface,text_surf,screen):
+    screen.blit(theme.background, (0, 0))
+    pygame.draw.rect(menuSurface,(180,188,188,150),(180,0,1860,325))
+    pygame.draw.rect(menuSurface,(250,245,245,190),(180,0,1860,325),2)
+    screen.blit(menuSurface, (0,0))
+    screen.blit(text_surf,(780,140,400,40))
+def clearWallsFunc(grid):
+    grid.frameFinished = False
+    grid.replaceAll(WALL,EMPTY)
+def clearWeights(grid):
+    grid.replaceAll(WEIGHTEDNOD,EMPTY)
+def clearPathFunc(grid):
+    grid.isVisualStarted = False
+    grid.initializedPaths = False
+    for i in range(grid.xCount):
+        for j in range(grid.yCount):
+            if grid.grid[i][j].status not in [WALL,TRAVELER,DESTINATION,BOMB]:
+                grid.grid[i][j].change_status(EMPTY)
+
+#=======Main Pathfinding algorithm functions=========
+def RecursionMaze(grid,xstart,xend,ystart,yend,skew= None):
+    height = yend-ystart+1
+    width = xend-xstart+1
+    if width ==1 or height ==1:
+        return
+
+    if skew == HORIZONTAL:
+        choice = choiceOfWay(0,80)
+    elif skew == VERTICAL:
+        choice = choiceOfWay(0,20)
+    else:
+        choice = choiceOfWay((height-width)*1.5)
+    funcs = []
+
+    if choice == HORIZONTAL:
+        wally = ystart + (random.randint(1,height//2)*2)-1
+        while grid.grid[xstart-1][wally].status == EMPTY or grid.grid[xend+1][wally].status == EMPTY:
+            wally = ystart + (random.randint(1,height//2)*2)-1
+        hole = (random.randint(0,width//2)*2)
+
+        for i in range(width):
+            if i != hole and grid.grid[xstart+ i][wally].status==EMPTY:
+                yield
+                grid.grid[xstart+ i][wally].change_status(WALL)
+        
+        funcs.append(RecursionMaze(grid,xstart,xend,ystart,wally-1,skew))
+        funcs.append(RecursionMaze(grid,xstart,xend,wally+1,yend,skew))
+
+        for func in funcs:
+            try:
+                yield from func
+            except StopIteration:
+                funcs.remove(func)
+
+    elif choice == VERTICAL:
+        wallx = xstart + (random.randint(1,width//2)*2)-1
+        while grid.grid[wallx][ystart-1].status == EMPTY or grid.grid[wallx][yend+1].status == EMPTY:
+            wallx = xstart + (random.randint(1,width//2)*2)-1
+
+        hole = (random.randint(0,height//2)*2)
+
+        for i in range(height):
+            if i != hole and grid.grid[wallx][ystart+ i].status ==EMPTY:
+                yield
+                grid.grid[wallx][ystart+ i].change_status(WALL)
+
+        funcs.append(RecursionMaze(grid,xstart,wallx-1,ystart,yend,skew))
+        funcs.append(RecursionMaze(grid,wallx+1,xend,ystart,yend,skew))
+
+        for func in funcs:
+            try:
+                yield from func
+            except StopIteration:
+                funcs.remove(func)
 
 def createAbstractGrid(grid, endX, endY):
 
     absGrid = [[-1 for x in range(grid.yCount )] for x in range(grid.xCount)]
-    
 
     for i in range(grid.xCount):
         for j in range(grid.yCount):
-            if grid.grid[i][j].status == EMPTY or grid.grid[i][j].status == TRIED:
+            if grid.grid[i][j].status in [EMPTY,TRIED]:
                 absGrid[i][j] = 0
 
     absGrid[endX][endY] = 2
-
-
     return absGrid
-
-def clearWallsFunc(grid):
-    global frameFinished
-    frameFinished = False
-    for i in range(grid.xCount):
-        for j in range(grid.yCount):
-            if grid.grid[i][j].status == WALL:
-                grid.grid[i][j].change_status(EMPTY)
-def colorsBackToNormal(grid):
-    global travelerCoords, destinationCoords
-    grid.grid[travelerCoords[0]][travelerCoords[1]].change_color((255,0,255,200))
-    grid.grid[destinationCoords[0]][destinationCoords[1]].change_color((0,255,255,200))
-def clearPathFunc(grid):
-    #colorsBackToNormal(grid)
-    for i in range(grid.xCount):
-        for j in range(grid.yCount):
-            if grid.grid[i][j].status == TRIED or grid.grid[i][j].status == TRIED2 or grid.grid[i][j].status == FAKE_TRAVELER or grid.grid[i][j].status == RIGHT_PATH:
-                grid.grid[i][j].change_status(EMPTY)
-
-def clearWeights(grid):
-    for i in range(grid.xCount):
-        for j in range(grid.yCount):
-            if grid.grid[i][j].status == WEIGHTEDNOD:
-                grid.grid[i][j].change_status(EMPTY)
-
 
 def depthFirstSearch(grid, startX, startY, endX, endY):
     dfsTraversalOrder = []
@@ -388,7 +371,6 @@ def depthFirstSearch(grid, startX, startY, endX, endY):
     stack = [(startX,startY)]
     dfsTraversalOrder.append(stack[-1])
 
-    
     isReached = False
     while stack and not isReached:
         current = stack.pop(-1)
@@ -419,8 +401,6 @@ def depthFirstSearch(grid, startX, startY, endX, endY):
                         break
 
     return dfsTraversalOrder , path
-
-
 
 def breadthFirstSearch(grid,startX, startY, endX, endY):
     bfsTraversalOrder = []
@@ -459,7 +439,6 @@ def breadthFirstSearch(grid,startX, startY, endX, endY):
                     current = (current[0] + coordinate[0], current[1] + coordinate[1])
                     break
     return bfsTraversalOrder, path
-
 
 def greedyBestSearch(grid,startX, startY, endX, endY):
     greedyBestSearchTraversalOrder = []
@@ -533,70 +512,12 @@ def greedyBestSearch(grid,startX, startY, endX, endY):
 
     return greedyBestSearchTraversalOrder, path
 
-HORIZONTAL = 0
-VERTICAL = 1
-
 def choiceOfWay(skewAmount,horizontalOdds = 50):
     horizontalOdds += skewAmount
     if random.randint(1,100) < horizontalOdds:
         return HORIZONTAL
     else:
         return VERTICAL
-
-def RecursionMaze(grid,xstart,xend,ystart,yend,skew= None):
-    height = yend-ystart+1
-    width = xend-xstart+1
-    if width ==1 or height ==1:
-        return
-
-    if skew == HORIZONTAL:
-        choice = choiceOfWay(0,80)
-    elif skew == VERTICAL:
-        choice = choiceOfWay(0,20)
-    else:
-        choice = choiceOfWay((height-width)*1.5)
-    funcs = []
-
-    if choice == HORIZONTAL:
-        wally = ystart + (random.randint(1,height//2)*2)-1
-        while grid.grid[xstart-1][wally].status == EMPTY or grid.grid[xend+1][wally].status == EMPTY:
-            wally = ystart + (random.randint(1,height//2)*2)-1
-        hole = (random.randint(0,width//2)*2)
-
-        for i in range(width):
-            if i != hole and grid.grid[xstart+ i][wally].status==EMPTY:
-                yield
-                grid.grid[xstart+ i][wally].change_status(WALL)
-        
-        funcs.append(RecursionMaze(grid,xstart,xend,ystart,wally-1,skew))
-        funcs.append(RecursionMaze(grid,xstart,xend,wally+1,yend,skew))
-
-        for func in funcs:
-            try:
-                yield from func
-            except StopIteration:
-                funcs.remove(func)
-
-    elif choice == VERTICAL:
-        wallx = xstart + (random.randint(1,width//2)*2)-1
-        while grid.grid[wallx][ystart-1].status == EMPTY or grid.grid[wallx][yend+1].status == EMPTY:
-            wallx = xstart + (random.randint(1,width//2)*2)-1
-
-        hole = (random.randint(0,height//2)*2)
-
-        for i in range(height):
-            if i != hole and grid.grid[wallx][ystart+ i].status ==EMPTY:
-                yield
-                grid.grid[wallx][ystart+ i].change_status(WALL)
-
-        funcs.append(RecursionMaze(grid,xstart,wallx-1,ystart,yend,skew))
-        funcs.append(RecursionMaze(grid,wallx+1,xend,ystart,yend,skew))
-
-        for func in funcs:
-            try:
-                yield from func
-            except StopIteration:
-                funcs.remove(func)
 
 def basicMaze(grid):
     for i in range(grid.xCount):
@@ -625,7 +546,6 @@ def stairsPattern(grid):
                 grid.grid[i][2*y-i+14].change_status(WALL)
 
 def frame(grid,x,y):#yield can be implemented here
-    global frameFinished
     for i in range(y):
         if grid.grid[0][i].status == EMPTY:
             yield
@@ -640,9 +560,7 @@ def frame(grid,x,y):#yield can be implemented here
         if grid.grid[i][y-1].status == EMPTY:
             yield
             grid.grid[i][y-1].change_status(WALL)
-    frameFinished = True
-
-
+    grid.frameFinished = True
 
 def createAbsGraph(grid, endX, endY):
   
@@ -660,7 +578,6 @@ def createAbsGraph(grid, endX, endY):
 
 
     return absGraph
-
 
 def Dijkstra(grid,startX, startY, endX, endY):
     DijkstraTraversalOrder = []
@@ -704,10 +621,6 @@ def Dijkstra(grid,startX, startY, endX, endY):
 
     return DijkstraTraversalOrder, path
 
-
-
-
-
 def aStar(grid, start, end):
     frontier = PriorityQueue()
     frontier.put((0, start))
@@ -746,6 +659,18 @@ def aStar(grid, start, end):
         pathTemp = came_from[pathTemp]
     
     return aStarTraversal , path
-        
 
-    
+
+if __name__ == '__main__':
+    #initilaze the pygame
+    pygame.init()
+
+    # Creating the screen
+    screen = pygame.display.set_mode((1920, 1080), pygame.HWSURFACE)
+
+    # Setting title and icon
+    pygame.display.set_caption("Visualized Algorithms")
+    icon = pygame.image.load('assets/icon.png')
+    pygame.display.set_icon(icon)
+
+    pathfindingScreen(screen)

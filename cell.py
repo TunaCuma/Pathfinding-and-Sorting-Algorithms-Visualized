@@ -150,56 +150,56 @@ class Cell(pygame.sprite.Sprite):
                     if self.collide == False: # do these only first collision
                         self.collide = True
                         
-                        if draggingTrav:
+                        if self.grid.draggingTrav:
                             self.oldStatus = self.status
                             self.change_status(TRAVELER)
-                        elif draggingDest:
+                        elif self.grid.draggingDest:
                             self.oldStatus = self.status
                             self.change_status(DESTINATION)
-                        elif draggingBomb:
+                        elif self.grid.draggingBomb:
                             self.oldStatus = self.status
                             self.change_status(BOMB)
                         else:
                             action = True
-                            if keyDown == False:
+                            if Cell.keyDown == False:
                                 if self.status == WALL:
                                     Cell.paint = EMPTY
                                     Cell.painting = True
                                 else:
                                     Cell.paint = WALL
                                     Cell.painting = True
-                                keyDown = True
-                    elif not (draggingBomb or draggingDest or draggingTrav) and keyDown == False:
+                                Cell.keyDown = True
+                    elif not (self.grid.draggingBomb or self.grid.draggingDest or self.grid.draggingTrav) and Cell.keyDown == False:
                         action = True
-                        if keyDown == False:
+                        if Cell.keyDown == False:
                             if self.status == WALL:
                                 Cell.paint = EMPTY
                                 Cell.painting = True
                             else:
                                 Cell.paint = WALL
                                 Cell.painting = True
-                            keyDown = True
+                            Cell.keyDown = True
                 elif self.collide == True:
                     self.collide = False
-        elif keyDown == True:
-            keyDown = False
+        elif Cell.keyDown == True:
+            Cell.keyDown = False
             Cell.painting = False
         if self.pressed== True:
             self.pressed = False
             
-        elif draggingTrav and self.rect.collidepoint(mouse_pos): #traveler dropped here
+        elif self.grid.draggingTrav and self.rect.collidepoint(mouse_pos): #traveler dropped here
             self.change_status(TRAVELER)
-            draggingTrav = False
-            Cell.travelerCoords = (self.i, self.j)
+            self.grid.draggingTrav = False
+            self.grid.travelerCoords = (self.i, self.j)
 
-        elif draggingDest and self.rect.collidepoint(mouse_pos): #destination dropped here
+        elif self.grid.draggingDest and self.rect.collidepoint(mouse_pos): #destination dropped here
             self.change_status(DESTINATION)
-            draggingDest = False
-            Cell.destinationCoords = (self.i, self.j)
-        elif draggingBomb and self.rect.collidepoint(mouse_pos): #Bomb dropped here
+            self.grid.draggingDest = False
+            self.grid.destinationCoords = (self.i, self.j)
+        elif self.grid.draggingBomb and self.rect.collidepoint(mouse_pos): #Bomb dropped here
             self.change_status(BOMB)
-            draggingBomb = False
-            Cell.bombCoords = (self.i, self.j)
+            self.grid.draggingBomb = False
+            self.grid.bombCoords = (self.i, self.j)
 
         return action
     
@@ -208,21 +208,21 @@ class Cell(pygame.sprite.Sprite):
         mouse_pos = pygame.mouse.get_pos()
 
         if self.rect.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0] and not (Cell.painting or dropdownmenu.dropdownIsOpen or self.grid.isVisualStarted):
-            if self.status == TRAVELER and not (draggingTrav or draggingDest or draggingBomb):
-                draggingTrav = True
+            if self.status == TRAVELER and not (self.grid.draggingTrav or self.grid.draggingDest or self.grid.draggingBomb):
+                self.grid.draggingTrav = True
 
-            elif self.status == DESTINATION and not (draggingTrav or draggingDest or draggingBomb):
-                draggingDest = True
+            elif self.status == DESTINATION and not (self.grid.draggingTrav or self.grid.draggingDest or self.grid.draggingBomb):
+                self.grid.draggingDest = True
 
-            elif self.status == BOMB and not (draggingTrav or draggingDest or draggingBomb):
-                draggingBomb = True
+            elif self.status == BOMB and not (self.grid.draggingTrav or self.grid.draggingDest or self.grid.draggingBomb):
+                self.grid.draggingBomb = True
 
         #return to previous status when collision ends
-        elif self.status == TRAVELER and draggingTrav: 
+        elif self.status == TRAVELER and self.grid.draggingTrav: 
             action = True
-        elif self.status == DESTINATION and draggingDest:
+        elif self.status == DESTINATION and self.grid.draggingDest:
             action = True
-        elif self.status == BOMB and draggingBomb:
+        elif self.status == BOMB and self.grid.draggingBomb:
             action = True
         return action
     def update_color(self):
@@ -235,7 +235,7 @@ class Cell(pygame.sprite.Sprite):
         elif self.status == WALL:
             self.change_color((20,20,20,transparency))
         elif self.status == TRAVELER:
-            Cell.travelerCoords = (self.i,self.j)
+            self.grid.travelerCoords = (self.i,self.j)
             self.change_color((255,0,255,transparency))
         elif self.status == RIGHT_PATH:
             self.change_color((255,255,0,100),99)
@@ -252,7 +252,6 @@ class Cell(pygame.sprite.Sprite):
         elif self.status == FAKE_TRAVELER:
             self.change_color((255,0,255,transparency//2),transparency//2-1)
     def change_status(self, status):
-        global travelerCoords
         self.status = status
         self.update_color()
         self.update_theme(self.theme)
