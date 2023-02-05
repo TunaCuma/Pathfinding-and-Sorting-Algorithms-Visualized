@@ -5,6 +5,7 @@ class Button:
     def __init__(self,text,width,height,pos,elevation,screen,gui_font,img = None):
         #Core attributes 
         self.pressed = False
+        self.howered = False
         self.elevation = elevation
         self.dynamic_elecation = elevation
         self.original_y_pos = pos[1]
@@ -47,6 +48,7 @@ class Button:
         action = False
         mouse_pos = pygame.mouse.get_pos()
         if self.top_rect.collidepoint(mouse_pos):
+            self.howered = True
             self.top_color = '#FFFFFF'
             if pygame.mouse.get_pressed()[0]:
                 self.dynamic_elecation = 0
@@ -57,6 +59,7 @@ class Button:
                     action = True
                     self.pressed = False
         else:
+            self.howered = False
             self.dynamic_elecation = self.elevation
             self.top_color = '#F7F6F2'
         return action

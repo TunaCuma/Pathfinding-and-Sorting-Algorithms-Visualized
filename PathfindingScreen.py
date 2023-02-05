@@ -137,6 +137,10 @@ def pathfindingScreen(screen) -> bool:
                 if algoToUsetemp != -1:
                     algorithmsButton.text = algoToUsetemp
                     algorithmsDropDown.reveal()
+                else:
+                    for button in algorithmsDropDown.buttons:
+                        if button.howered:
+                            showInfo(button,gui_font,screen)
             elif mazesAndPatternsDropDown.isOpen:
                 selectedMazeTemp = mazesAndPatternsDropDown.Draw()
                 if selectedMazeTemp != -1:
@@ -294,7 +298,24 @@ def clearPathFunc(grid):
         for j in range(grid.yCount):
             if grid.grid[i][j].status not in [WALL,TRAVELER,DESTINATION,BOMB,WEIGHTEDNOD]:
                 grid.grid[i][j].change_status(EMPTY)
-
+def showInfo(button, font, screen):
+    if button.text == 'Breadth-first Search':
+        with open("assets/BreadthFirstSearchInfo.txt","r") as file:
+            text = file.read()
+        text_surf = font.render(text,True,'#FFFFFF')
+        screen.blit(text_surf,(780,140,400,40))
+    elif button.text == 'Depth-first Search':
+        text_surf = font.render("Depth-first Search",True,'#FFFFFF')
+        screen.blit(text_surf,(780,140,400,40))
+    elif button.text == 'Greedy Best-first Search':
+        text_surf = font.render("Greedy Best-first Search",True,'#FFFFFF')
+        screen.blit(text_surf,(780,140,400,40))
+    elif button.text == "Dijkstra's Algorithm":
+        text_surf = font.render("Dijkstra's Algorithm",True,'#FFFFFF')
+        screen.blit(text_surf,(780,140,400,40))
+    elif button.text == 'A* Search':
+        text_surf = font.render("A* Search",True,'#FFFFFF')
+        screen.blit(text_surf,(780,140,400,40))
 #=======Main Pathfinding algorithm functions=========
 def RecursionMaze(grid,xstart,xend,ystart,yend,skew= None):
     height = yend-ystart+1
