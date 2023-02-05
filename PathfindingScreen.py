@@ -52,7 +52,7 @@ def pathfindingScreen(screen) -> bool:
     algorithmsButton  = Button(algoToUse,300,40,(1430,260),5,screen,gui_font)
     mazesAndPatternsButton = Button('Mazes And Patterns',300,40,(500,260),5,screen,gui_font)
     addBombButton = Button('Add Bomb',300,40,(190,210),5,screen,gui_font)
-    clearGridButton = Button('Clear Grid',300,40,(1120,210),5,screen,gui_font)
+    clearGridButton = Button('Reset Grid',300,40,(1120,210),5,screen,gui_font)
     clearWallsButton = Button('Clear Walls and Weights',300,40,(1430,210),5,screen,gui_font)
     clearPathButton = Button('Clear Path',300,40,(500,210),5,screen,gui_font)
     speedButton = Button('Speed: Fast',300,40,(190,260),5,screen,gui_font)
@@ -315,6 +315,8 @@ def clearWallsFunc(grid):
 def clearWeights(grid):
     grid.replaceAll(WEIGHTEDNOD,EMPTY)
 def clearPathFunc(grid):
+    grid.travelIsDone = True
+    grid.explorationIsDone = True
     grid.isVisualStarted = False
     grid.initializedPaths = False
     for i in range(grid.xCount):
