@@ -315,7 +315,7 @@ def blit_text(surface, text, pos, font, color=pygame.Color('black')):
         x = pos[0]  # Reset the x.
         y += word_height  # Start on new row.
 def showInfo(button, font, screen):
-    x=780
+    x=500
     y=440
     if button.text == 'Breadth-first Search':
         with open("assets/BreadthFirstSearchInfo.txt","r") as file:

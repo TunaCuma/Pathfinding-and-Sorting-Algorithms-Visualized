@@ -1,0 +1,17 @@
+    A* is a search algorithm that is used to find the shortest 
+path between two nodes in a graph. Unlike Dijkstra's algorithm, 
+which finds the shortest path to all nodes, A* only calculates 
+the shortest path to the destination node.
+    A* combines the strengths of two other algorithms, Dijkstra's 
+algorithm and a heuristic search algorithm. A heuristic function 
+is used to estimate the cost of reaching the destination node from 
+a given node. This estimate is combined with the actual cost of 
+reaching that node from the source node, to create a cost estimate 
+for reaching the destination node. The algorithm selects the node 
+with the lowest cost estimate to visit next, and continues until 
+the destination node is reached or there are no more nodes to visit.
+    The A* algorithm is an informed search algorithm, meaning it uses 
+additional information about the problem to search more efficiently. 
+The heuristic function must be an admissible heuristic, meaning it 
+must never overestimate the cost of reaching the destination node, 
+in order for the algorithm to guarantee the shortest path.
