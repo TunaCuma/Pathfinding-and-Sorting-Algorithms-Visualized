@@ -319,6 +319,8 @@ def clearPathFunc(grid):
     grid.explorationIsDone = True
     grid.isVisualStarted = False
     grid.initializedPaths = False
+    grid.startTravel = 0
+    grid.startExploration = 0
     for i in range(grid.xCount):
         for j in range(grid.yCount):
             if grid.grid[i][j].status not in [WALL,TRAVELER,DESTINATION,BOMB,WEIGHTEDNOD]:
