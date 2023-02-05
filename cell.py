@@ -9,29 +9,28 @@ class Cell(pygame.sprite.Sprite):
     paint = WALL
     painting = False
     dragging = False
-    def __init__(self, size, color, screen, x, y, i, j, theme, grid, spriteArrs = None):
+
+    def __init__(self, size, color, screen, x, y, cellX, cellY, theme, grid, spriteArrs = None):
         super().__init__()
         self.size = size
         self.grid = grid
         self.x = x
         self.y = y
-        self.i = i
-        self.j = j
+        self.cellX = cellX
+        self.cellY = cellY
         self.pos = (self.x, self.y)
-        self.rect = pygame.Rect((self.x, self.y), (self.size, self.size))
+        self.rect = pygame.Rect(self.pos, (self.size, self.size))
         self.rect.topleft = self.pos
         self.win = screen
         self.color = color
-        self.drag = False
         self.pressed = False
         self.collide = False
         self.status = EMPTY
         self.oldStatus = self.status
-        self.currentRect = color[3]
-        self.speed = 5
+        self.opacity = color[3]
+        self.opacityChangeSpeed = 5
         self.subsurface = pygame.Surface((self.size,self.size), pygame.SRCALPHA)
         self.subsurface.fill(self.color)
-        self.gridColor = (0, 0, 0)
         self.theme = theme
         self.current_sprite = 0
         if spriteArrs:
@@ -44,13 +43,11 @@ class Cell(pygame.sprite.Sprite):
             self.animation = False
             self.sprites = None
             self.image = None
-    def change_color(self, color, currentRect = None):
-        if currentRect:
-            self.currentRect = currentRect
-        elif self.status>4:
-            self.currentRect = 0
+    def change_color(self, color, opacity = None): #opacity will drop after color change for a visual effect
+        if opacity:
+            self.opacity = opacity
         else:
-            self.currentRect = 0
+            self.opacity = 0
         self.color = color
         
     def update_sprites(self):
@@ -90,23 +87,18 @@ class Cell(pygame.sprite.Sprite):
                 self.sprites = [self.spriteArrs[2][0]]
         elif self.status == FAKE_TRAVELER:
             self.sprites = self.spriteArrs[0]
-    
-    def change_gridColor(self, gridColor):
-        self.gridColor = gridColor
-
 
     def Draw(self):
 
-        if self.status>4:
-            if self.check_drag():
-                self.change_status(self.oldStatus)
+        if self.status>4 and self.check_drag():
+            self.change_status(self.oldStatus)
 
         elif self.check_click():
             self.change_status(Cell.paint)
         
-        if int(self.currentRect) < self.color[3]:
-            self.currentRect += self.speed
-            self.subsurface.fill((self.color[0],self.color[1],self.color[2],int(self.currentRect)))
+        if int(self.opacity) < self.color[3]:
+            self.opacity += self.opacityChangeSpeed
+            self.subsurface.fill((self.color[0],self.color[1],self.color[2],int(self.opacity)))
 
         self.win.blit(self.subsurface, self.pos)
         
@@ -114,7 +106,7 @@ class Cell(pygame.sprite.Sprite):
         if self.status>4:
             pygame.draw.rect(self.win, (100,100,255), self.rect, 1)
         else:
-            pygame.draw.rect(self.win, self.gridColor, self.rect, 1)
+            pygame.draw.rect(self.win, self.grid.color, self.rect, 1)
     
 
     def update(self,speed):
@@ -125,7 +117,6 @@ class Cell(pygame.sprite.Sprite):
             self.image = self.sprites[int((self.current_sprite/15)*len(self.sprites))]
 
     def update_theme(self,theme):
-        self.change_gridColor(theme.Color)
         self.theme = theme
         if theme.themeArrs:
             self.animation = True
@@ -151,13 +142,13 @@ class Cell(pygame.sprite.Sprite):
                         self.collide = True
                         
                         if self.grid.draggingTrav:
-                            self.oldStatus = self.status
+                            self.status = self.oldStatus
                             self.change_status(TRAVELER)
                         elif self.grid.draggingDest:
-                            self.oldStatus = self.status
+                            self.status = self.oldStatus
                             self.change_status(DESTINATION)
                         elif self.grid.draggingBomb:
-                            self.oldStatus = self.status
+                            self.status = self.oldStatus
                             self.change_status(BOMB)
                         else:
                             action = True
@@ -179,7 +170,7 @@ class Cell(pygame.sprite.Sprite):
                                 Cell.paint = WALL
                                 Cell.painting = True
                             Cell.keyDown = True
-                elif self.collide == True:
+                elif self.collide:
                     self.collide = False
         elif Cell.keyDown == True:
             Cell.keyDown = False
@@ -190,16 +181,15 @@ class Cell(pygame.sprite.Sprite):
         elif self.grid.draggingTrav and self.rect.collidepoint(mouse_pos): #traveler dropped here
             self.change_status(TRAVELER)
             self.grid.draggingTrav = False
-            self.grid.travelerCoords = (self.i, self.j)
 
         elif self.grid.draggingDest and self.rect.collidepoint(mouse_pos): #destination dropped here
             self.change_status(DESTINATION)
             self.grid.draggingDest = False
-            self.grid.destinationCoords = (self.i, self.j)
+            self.grid.destinationCoords = (self.cellX, self.cellY)
         elif self.grid.draggingBomb and self.rect.collidepoint(mouse_pos): #Bomb dropped here
             self.change_status(BOMB)
             self.grid.draggingBomb = False
-            self.grid.bombCoords = (self.i, self.j)
+            self.grid.bombCoords = (self.cellX, self.cellY)
 
         return action
     
@@ -235,7 +225,6 @@ class Cell(pygame.sprite.Sprite):
         elif self.status == WALL:
             self.change_color((20,20,20,transparency))
         elif self.status == TRAVELER:
-            self.grid.travelerCoords = (self.i,self.j)
             self.change_color((255,0,255,transparency))
         elif self.status == RIGHT_PATH:
             self.change_color((255,255,0,100),99)
@@ -252,6 +241,12 @@ class Cell(pygame.sprite.Sprite):
         elif self.status == FAKE_TRAVELER:
             self.change_color((255,0,255,transparency//2),transparency//2-1)
     def change_status(self, status):
+        if self.status == TRAVELER:
+            self.grid.travelerCoords = (self.cellX,self.cellY)
+        elif self.status == DESTINATION:
+            self.grid.destinationCoords = (self.cellX,self.cellY)
+        elif self.status == BOMB:
+            self.grid.bombCoords = (self.cellX,self.cellY)
         self.status = status
         self.update_color()
         self.update_theme(self.theme)
