@@ -292,7 +292,7 @@ def clearPathFunc(grid):
     grid.initializedPaths = False
     for i in range(grid.xCount):
         for j in range(grid.yCount):
-            if grid.grid[i][j].status not in [WALL,TRAVELER,DESTINATION,BOMB]:
+            if grid.grid[i][j].status not in [WALL,TRAVELER,DESTINATION,BOMB,WEIGHTEDNOD]:
                 grid.grid[i][j].change_status(EMPTY)
 
 #=======Main Pathfinding algorithm functions=========

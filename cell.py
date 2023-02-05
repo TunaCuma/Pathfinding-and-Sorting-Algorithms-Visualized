@@ -133,24 +133,38 @@ class Cell(pygame.sprite.Sprite):
     def check_click(self):
         action = False
         mouse_pos = pygame.mouse.get_pos()
-        if pygame.mouse.get_pressed()[0] and not self.grid.isVisualStarted:
-            if self.pressed == False:
-                self.pressed = True
-                
-                if self.rect.collidepoint(mouse_pos) and not dropdownmenu.dropdownIsOpen:
-                    if self.collide == False: # do these only first collision
-                        self.collide = True
-                        
-                        if self.grid.draggingTrav:
-                            self.status = self.oldStatus
-                            self.change_status(TRAVELER)
-                        elif self.grid.draggingDest:
-                            self.status = self.oldStatus
-                            self.change_status(DESTINATION)
-                        elif self.grid.draggingBomb:
-                            self.status = self.oldStatus
-                            self.change_status(BOMB)
-                        else:
+        if not self.grid.isVisualStarted:
+            if pygame.mouse.get_pressed()[0]:
+                if self.pressed == False:
+                    self.pressed = True
+                    
+                    if self.rect.collidepoint(mouse_pos) and not dropdownmenu.dropdownIsOpen:
+                        if self.collide == False: # do these only first collision
+                            self.collide = True
+                            
+                            if self.grid.draggingTrav:
+                                if self.status != TRAVELER:
+                                    self.oldStatus = self.status
+                                self.change_status(TRAVELER)
+                            elif self.grid.draggingDest:
+                                if self.status != DESTINATION:
+                                    self.oldStatus = self.status
+                                self.change_status(DESTINATION)
+                            elif self.grid.draggingBomb:
+                                if self.status != BOMB:
+                                    self.oldStatus = self.status
+                                self.change_status(BOMB)
+                            else:
+                                action = True
+                                if Cell.keyDown == False:
+                                    if self.status == WALL:
+                                        Cell.paint = EMPTY
+                                        Cell.painting = True
+                                    else:
+                                        Cell.paint = WALL
+                                        Cell.painting = True
+                                    Cell.keyDown = True
+                        elif not (self.grid.draggingBomb or self.grid.draggingDest or self.grid.draggingTrav) and Cell.keyDown == False:
                             action = True
                             if Cell.keyDown == False:
                                 if self.status == WALL:
@@ -160,21 +174,53 @@ class Cell(pygame.sprite.Sprite):
                                     Cell.paint = WALL
                                     Cell.painting = True
                                 Cell.keyDown = True
-                    elif not (self.grid.draggingBomb or self.grid.draggingDest or self.grid.draggingTrav) and Cell.keyDown == False:
-                        action = True
-                        if Cell.keyDown == False:
-                            if self.status == WALL:
-                                Cell.paint = EMPTY
-                                Cell.painting = True
+                    elif self.collide:
+                        self.collide = False
+            elif pygame.mouse.get_pressed()[2]:
+                if self.pressed == False:
+                    self.pressed = True
+                    
+                    if self.rect.collidepoint(mouse_pos) and not dropdownmenu.dropdownIsOpen:
+                        if self.collide == False: # do these only first collision
+                            self.collide = True
+                            
+                            if self.grid.draggingTrav:
+                                if self.status != TRAVELER:
+                                    self.oldStatus = self.status
+                                self.change_status(TRAVELER)
+                            elif self.grid.draggingDest:
+                                if self.status != DESTINATION:
+                                    self.oldStatus = self.status
+                                self.change_status(DESTINATION)
+                            elif self.grid.draggingBomb:
+                                if self.status != BOMB:
+                                    self.oldStatus = self.status
+                                self.change_status(BOMB)
                             else:
-                                Cell.paint = WALL
-                                Cell.painting = True
-                            Cell.keyDown = True
-                elif self.collide:
-                    self.collide = False
-        elif Cell.keyDown == True:
-            Cell.keyDown = False
-            Cell.painting = False
+                                action = True
+                                if Cell.keyDown == False:
+                                    if self.status == WEIGHTEDNOD:
+                                        Cell.paint = EMPTY
+                                        Cell.painting = True
+                                    else:
+                                        Cell.paint = WEIGHTEDNOD
+                                        Cell.painting = True
+                                    Cell.keyDown = True
+                        elif not (self.grid.draggingBomb or self.grid.draggingDest or self.grid.draggingTrav) and Cell.keyDown == False:
+                            action = True
+                            if Cell.keyDown == False:
+                                if self.status == WEIGHTEDNOD:
+                                    Cell.paint = EMPTY
+                                    Cell.painting = True
+                                else:
+                                    Cell.paint = WEIGHTEDNOD
+                                    Cell.painting = True
+                                Cell.keyDown = True
+                    elif self.collide:
+                        self.collide = False
+            elif Cell.keyDown == True:
+                Cell.keyDown = False
+                Cell.painting = False
         if self.pressed== True:
             self.pressed = False
             
