@@ -8,7 +8,7 @@ from dropdownmenu import dropdownmenu
 from theme import Theme
 from grid import Grid
 from constants import *
-
+import time
 
 
 def pathfindingScreen(screen) -> bool:
@@ -73,7 +73,6 @@ def pathfindingScreen(screen) -> bool:
 
     menuSurface = pygame.Surface((1860,325), pygame.SRCALPHA)
     grid.initializedPaths = False
-
     # a helper function to simplify the loop below
     def drawButtons():
         if backwardButton.draw():
@@ -126,6 +125,7 @@ def pathfindingScreen(screen) -> bool:
                 return False
         
         drawBackground(grid.theme,menuSurface,text_surf,screen)
+        drawTimers(grid,screen,gui_font)
         if drawButtons():
             return True
         updateGrid(grid,screen,moving_sprites)
@@ -246,6 +246,8 @@ def pathfindingScreen(screen) -> bool:
                     travelerToDestPath.reverse()
                                 
                 grid.initializedPaths = True
+                grid.explorationIsDone = False
+                grid.startExploration = time.time()
             else:
                 grid.replaceAll(FAKE_TRAVELER,RIGHT_PATH)
                 pygame.time.wait(speedValue)
@@ -256,20 +258,37 @@ def pathfindingScreen(screen) -> bool:
                     elif bombToDest:
                         grid.grid[bombToDest[0][0]][bombToDest[0][1]].change_status(TRIED2)
                         bombToDest.pop(0)
+                    elif not grid.explorationIsDone:
+                        grid.explorationIsDone = True
+                        grid.travelIsDone = False
+                        grid.startTravel = time.time()
+                        grid.startExploration = grid.startTravel - grid.startExploration
                     elif travelerToBombPath:
                         grid.grid[travelerToBombPath[0][0]][travelerToBombPath[0][1]].change_status(FAKE_TRAVELER)
                         travelerToBombPath.pop(0)
                     elif bombToDestPath:
                         grid.grid[bombToDestPath[0][0]][bombToDestPath[0][1]].change_status(FAKE_TRAVELER)
                         bombToDestPath.pop(0)
+                    else:
+                        grid.travelIsDone = True
+                        grid.startTravel = time.time() - grid.startTravel
                 else:
                     if travelerToDest:
                         grid.grid[travelerToDest[0][0]][travelerToDest[0][1]].change_status(TRIED)
                         travelerToDest.pop(0)
+                    elif not grid.explorationIsDone:
+                        grid.explorationIsDone = True
+                        grid.travelIsDone = False
+                        grid.startTravel = time.time()
+                        grid.startExploration = grid.startTravel - grid.startExploration
                     elif travelerToDestPath:
                         grid.grid[travelerToDestPath[0][0]][travelerToDestPath[0][1]].change_status(FAKE_TRAVELER)
                         travelerToDestPath.pop(0)
+                    else:
+                        grid.travelIsDone = True
+                        grid.startTravel = time.time() - grid.startTravel
 
+        
         pygame.display.update()
 
 #=========Helper functions=========
@@ -314,6 +333,19 @@ def blit_text(surface, text, pos, font, color=pygame.Color('black')):
             x += word_width + space
         x = pos[0]  # Reset the x.
         y += word_height  # Start on new row.
+def drawTimers(grid,screen,gui_font):
+    if grid.explorationIsDone:
+        explorationTimer = gui_font.render("exploration time: " + str(grid.startExploration),True,'#FFFFFF')
+    else:
+        explorationTimer = gui_font.render("exploration time: " + str(time.time()-grid.startExploration),True,'#FFFFFF')
+
+    if grid.travelIsDone:
+        travelTimer = gui_font.render("travel time: " + str(grid.startTravel),True,'#FFFFFF')
+    else:
+        travelTimer = gui_font.render("travel time: " + str(time.time()-grid.startTravel),True,'#FFFFFF')
+
+    screen.blit(explorationTimer,(1180,140,400,40))
+    screen.blit(travelTimer,(580,140,400,40))
 def showInfo(button, font, screen):
     x=700
     y=450

@@ -20,6 +20,10 @@ class Grid(object):
         self.pos = (x, y)
         self.color = color
         self.win = screen
+        self.startTravel = 0
+        self.startExploration = 0
+        self.travelIsDone = True
+        self.explorationIsDone = True
         self.grid = []
         self.moving_sprites = moving_sprites
         self.theme = theme
