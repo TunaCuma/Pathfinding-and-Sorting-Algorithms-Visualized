@@ -345,8 +345,8 @@ def drawTimers(grid,screen,gui_font):
     else:
         travelTimer = gui_font.render("travel time: " + str(time.time()-grid.startTravel),True,'#FFFFFF')
 
-    screen.blit(explorationTimer,(1180,140,400,40))
-    screen.blit(travelTimer,(380,140,400,40))
+    screen.blit(explorationTimer,(380,140,400,40))
+    screen.blit(travelTimer,(380,160,400,40))
 def showInfo(button, font, screen):
     x=700
     y=450

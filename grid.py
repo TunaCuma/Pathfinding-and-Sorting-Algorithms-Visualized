@@ -8,7 +8,7 @@ class Grid(object):
         self.frameFinished = False
         self.isVisualStarted = False
         self.travelerCoords = (1,1)
-        self.destinationCoords = (20,20)
+        self.destinationCoords = (49,19)
         self.bombCoords = (0,0)
         self.draggingTrav = False
         self.draggingDest = False
