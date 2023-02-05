@@ -247,6 +247,7 @@ def pathfindingScreen(screen) -> bool:
                                 
                 grid.initializedPaths = True
                 grid.explorationIsDone = False
+                grid.startTravel = 0
                 grid.startExploration = time.time()
             else:
                 grid.replaceAll(FAKE_TRAVELER,RIGHT_PATH)
@@ -269,7 +270,7 @@ def pathfindingScreen(screen) -> bool:
                     elif bombToDestPath:
                         grid.grid[bombToDestPath[0][0]][bombToDestPath[0][1]].change_status(FAKE_TRAVELER)
                         bombToDestPath.pop(0)
-                    else:
+                    elif not grid.travelIsDone:
                         grid.travelIsDone = True
                         grid.startTravel = time.time() - grid.startTravel
                 else:
@@ -284,7 +285,7 @@ def pathfindingScreen(screen) -> bool:
                     elif travelerToDestPath:
                         grid.grid[travelerToDestPath[0][0]][travelerToDestPath[0][1]].change_status(FAKE_TRAVELER)
                         travelerToDestPath.pop(0)
-                    else:
+                    elif not grid.travelIsDone:
                         grid.travelIsDone = True
                         grid.startTravel = time.time() - grid.startTravel
 
@@ -345,7 +346,7 @@ def drawTimers(grid,screen,gui_font):
         travelTimer = gui_font.render("travel time: " + str(time.time()-grid.startTravel),True,'#FFFFFF')
 
     screen.blit(explorationTimer,(1180,140,400,40))
-    screen.blit(travelTimer,(580,140,400,40))
+    screen.blit(travelTimer,(380,140,400,40))
 def showInfo(button, font, screen):
     x=700
     y=450
