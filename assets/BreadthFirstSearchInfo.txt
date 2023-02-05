@@ -1,4 +1,5 @@
-    Breadth-First Search (BFS) is an algorithm for 
-traversing or searching on unweighted graph data structures.
-It visits all the vertices of a graph at the same level 
-before going on to the next level.
+                                BREAD-FIRST SEARCH
+    Breadth-First Search (BFS) is an algorithm for traversing 
+or searching on unweighted graph data structures.It visits 
+all the vertices of a graph at the same level before going on 
+to the next level.

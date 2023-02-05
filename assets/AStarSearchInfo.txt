@@ -1,3 +1,4 @@
+                                    A* ALGORITHM
     A* is a search algorithm that is used to find the shortest 
 path between two nodes in a graph. Unlike Dijkstra's algorithm, 
 which finds the shortest path to all nodes, A* only calculates 

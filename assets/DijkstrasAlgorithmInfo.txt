@@ -1,3 +1,4 @@
+                                DIJKSTRA'S ALGORITHM
     Dijkstra's algorithm is a graph search algorithm that 
 finds the shortest path from a source node to all other nodes 
 in a weighted graph. The algorithm works by maintaining a set 
@@ -7,4 +8,5 @@ known distance and updating the distances of its neighbors. The
 algorithm terminates when the destination node has been processed, 
 or when all vertices have been processed. The final result is a set 
 of distances from the source node to all other nodes, and the shortest 
-path can be reconstructed by tracing back through the processed vertices.
+path can be reconstructed by tracing back through the processed 
+vertices.

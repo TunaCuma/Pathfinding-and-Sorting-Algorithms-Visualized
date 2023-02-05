@@ -315,8 +315,10 @@ def blit_text(surface, text, pos, font, color=pygame.Color('black')):
         x = pos[0]  # Reset the x.
         y += word_height  # Start on new row.
 def showInfo(button, font, screen):
-    x=500
-    y=440
+    x=700
+    y=450
+    width = 1000
+    length = 750
     if button.text == 'Breadth-first Search':
         with open("assets/BreadthFirstSearchInfo.txt","r") as file:
             text = file.read()
@@ -333,7 +335,7 @@ def showInfo(button, font, screen):
         with open("assets/AStarSearchInfo.txt","r") as file:
             text = file.read()
     infoSurface = pygame.Surface((x,y), pygame.SRCALPHA)
-    pygame.draw.rect(infoSurface,(255,255,255,100),(0,0,300,200))
+    pygame.draw.rect(infoSurface,(255,255,255,100),(0,0,width,length))
     screen.blit(infoSurface, (x,y))
     blit_text(screen,text,(x+5,y+5),font)
 #=======Main Pathfinding algorithm functions=========
