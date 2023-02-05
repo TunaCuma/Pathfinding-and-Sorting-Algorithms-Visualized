@@ -317,37 +317,25 @@ def blit_text(surface, text, pos, font, color=pygame.Color('black')):
 def showInfo(button, font, screen):
     x=780
     y=440
-    infoSurface = pygame.Surface((x,y), pygame.SRCALPHA)
     if button.text == 'Breadth-first Search':
         with open("assets/BreadthFirstSearchInfo.txt","r") as file:
             text = file.read()
-        pygame.draw.rect(infoSurface,(255,255,255,100),(0,0,300,200))
-        screen.blit(infoSurface, (x,y))
-        blit_text(screen,text,(x+5,y+5),font)
     elif button.text == 'Depth-first Search':
         with open("assets/DepthFirstSearchInfo.txt","r") as file:
             text = file.read()
-        pygame.draw.rect(infoSurface,(255,255,255,100),(0,0,300,200))
-        screen.blit(infoSurface, (x,y))
-        blit_text(screen,text,(x+5,y+5),font)
     elif button.text == 'Greedy Best-first Search':
         with open("assets/GreedyBestFirstSearchInfo.txt","r") as file:
             text = file.read()
-        pygame.draw.rect(infoSurface,(255,255,255,100),(0,0,300,200))
-        screen.blit(infoSurface, (x,y))
-        blit_text(screen,text,(x+5,y+5),font)
     elif button.text == "Dijkstra's Algorithm":
         with open("assets/DijkstrasAlgorithmInfo.txt","r") as file:
             text = file.read()
-        pygame.draw.rect(infoSurface,(255,255,255,100),(0,0,300,200))
-        screen.blit(infoSurface, (x,y))
-        blit_text(screen,text,(x+5,y+5),font)
     elif button.text == 'A* Search':
         with open("assets/AStarSearchInfo.txt","r") as file:
             text = file.read()
-        pygame.draw.rect(infoSurface,(255,255,255,100),(0,0,300,200))
-        screen.blit(infoSurface, (x,y))
-        blit_text(screen,text,(x+5,y+5),font)
+    infoSurface = pygame.Surface((x,y), pygame.SRCALPHA)
+    pygame.draw.rect(infoSurface,(255,255,255,100),(0,0,300,200))
+    screen.blit(infoSurface, (x,y))
+    blit_text(screen,text,(x+5,y+5),font)
 #=======Main Pathfinding algorithm functions=========
 def RecursionMaze(grid,xstart,xend,ystart,yend,skew= None):
     height = yend-ystart+1
