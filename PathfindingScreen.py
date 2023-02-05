@@ -58,7 +58,7 @@ def pathfindingScreen(screen) -> bool:
     themeButton = Button(themeToUse,300,40,(1120,260),5,screen,gui_font)
 
     #Initilazing dropdown menus
-    algorithmChoices = ['Breadth-first Search','Depth-first Search','A* Search','Greedy Best-first Search',"Dijktra's Algorithm"]
+    algorithmChoices = ['Breadth-first Search','Depth-first Search','A* Search','Greedy Best-first Search',"Dijkstra's Algorithm"]
     speedChoices = ["Slow","Average","Fast"]
     themeChoices = ["Sea Theme","Space Theme","Pastel Theme"]
     mazesAndPatternsChoices = ["Recursive Division","Recursive Division (vertical skew)","Recursive Division (horizontal skew)","Basic Random Maze","Basic Weight Maze","Simple Stair Pattern"]
