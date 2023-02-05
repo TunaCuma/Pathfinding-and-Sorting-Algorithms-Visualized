@@ -117,9 +117,9 @@ def sortingScreen(screen) -> bool:
     otherColumnIndex = 0
     temp = None
 
-    theme1 = Theme(background2, (255,255,255),0)
-    theme2 = Theme(background4, (30,30,160),1)
-    theme3 = Theme(background3, (180,188,188),2)
+    theme1 = Theme(0)
+    theme2 = Theme(1)
+    theme3 = Theme(2)
 
     themeDropDown = dropdownmenu(["theme 1","theme 2","theme 3"],(1430,310), screen,40,300,gui_font)
     algoDropDown = dropdownmenu(["Merge Sort","Quick Sort","Heap Sort", "Bubble Sort"],(810,310), screen,40,300,gui_font)
@@ -445,3 +445,17 @@ def bubbleSort(columns):
             if columns[j].height > columns[j+1].height:
                 yield
                 replaceColumns(columns,j,j+1)
+
+if __name__ == '__main__':
+    #initilaze the pygame
+    pygame.init()
+
+    # Creating the screen
+    screen = pygame.display.set_mode((1920, 1080), pygame.HWSURFACE)
+
+    # Setting title and icon
+    pygame.display.set_caption("Visualized Algorithms")
+    icon = pygame.image.load('assets/icon.png')
+    pygame.display.set_icon(icon)
+
+    sortingScreen(screen)
