@@ -298,24 +298,56 @@ def clearPathFunc(grid):
         for j in range(grid.yCount):
             if grid.grid[i][j].status not in [WALL,TRAVELER,DESTINATION,BOMB,WEIGHTEDNOD]:
                 grid.grid[i][j].change_status(EMPTY)
+def blit_text(surface, text, pos, font, color=pygame.Color('black')):
+    words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
+    space = font.size(' ')[0]  # The width of a space.
+    max_width, max_height = surface.get_size()
+    x, y = pos
+    for line in words:
+        for word in line:
+            word_surface = font.render(word, 0, color)
+            word_width, word_height = word_surface.get_size()
+            if x + word_width >= max_width:
+                x = pos[0]  # Reset the x.
+                y += word_height  # Start on new row.
+            surface.blit(word_surface, (x, y))
+            x += word_width + space
+        x = pos[0]  # Reset the x.
+        y += word_height  # Start on new row.
 def showInfo(button, font, screen):
+    x=780
+    y=440
+    infoSurface = pygame.Surface((x,y), pygame.SRCALPHA)
     if button.text == 'Breadth-first Search':
         with open("assets/BreadthFirstSearchInfo.txt","r") as file:
             text = file.read()
-        text_surf = font.render(text,True,'#FFFFFF')
-        screen.blit(text_surf,(780,140,400,40))
+        pygame.draw.rect(infoSurface,(255,255,255,100),(0,0,300,200))
+        screen.blit(infoSurface, (x,y))
+        blit_text(screen,text,(x+5,y+5),font)
     elif button.text == 'Depth-first Search':
-        text_surf = font.render("Depth-first Search",True,'#FFFFFF')
-        screen.blit(text_surf,(780,140,400,40))
+        with open("assets/DepthFirstSearchInfo.txt","r") as file:
+            text = file.read()
+        pygame.draw.rect(infoSurface,(255,255,255,100),(0,0,300,200))
+        screen.blit(infoSurface, (x,y))
+        blit_text(screen,text,(x+5,y+5),font)
     elif button.text == 'Greedy Best-first Search':
-        text_surf = font.render("Greedy Best-first Search",True,'#FFFFFF')
-        screen.blit(text_surf,(780,140,400,40))
+        with open("assets/GreedyBestFirstSearchInfo.txt","r") as file:
+            text = file.read()
+        pygame.draw.rect(infoSurface,(255,255,255,100),(0,0,300,200))
+        screen.blit(infoSurface, (x,y))
+        blit_text(screen,text,(x+5,y+5),font)
     elif button.text == "Dijkstra's Algorithm":
-        text_surf = font.render("Dijkstra's Algorithm",True,'#FFFFFF')
-        screen.blit(text_surf,(780,140,400,40))
+        with open("assets/DijkstrasAlgorithmInfo.txt","r") as file:
+            text = file.read()
+        pygame.draw.rect(infoSurface,(255,255,255,100),(0,0,300,200))
+        screen.blit(infoSurface, (x,y))
+        blit_text(screen,text,(x+5,y+5),font)
     elif button.text == 'A* Search':
-        text_surf = font.render("A* Search",True,'#FFFFFF')
-        screen.blit(text_surf,(780,140,400,40))
+        with open("assets/AStarSearchInfo.txt","r") as file:
+            text = file.read()
+        pygame.draw.rect(infoSurface,(255,255,255,100),(0,0,300,200))
+        screen.blit(infoSurface, (x,y))
+        blit_text(screen,text,(x+5,y+5),font)
 #=======Main Pathfinding algorithm functions=========
 def RecursionMaze(grid,xstart,xend,ystart,yend,skew= None):
     height = yend-ystart+1
