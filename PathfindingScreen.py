@@ -44,7 +44,8 @@ def pathfindingScreen(screen) -> bool:
 
     #Initilazing title
     text_surf = title_font.render("Pathfinding Visualizer",True,'#FFFFFF')
-
+    tip1 = gui_font.render("left click: wall & erase wall",True,'#FFFFFF')
+    tip2 = gui_font.render("right click: weight & erase weight (for Dijkstra and A*)",True,'#FFFFFF')
     #Initilazing Buttons
     backwardButton = Button('',Theme.backwardImg.get_rect().width,Theme.backwardImg.get_rect().height,(200,120),5,screen,gui_font,Theme.backwardImg)
     startButton = Button('START THE VISUAL!',300,90,(810,210),5,screen,gui_font)
@@ -124,7 +125,7 @@ def pathfindingScreen(screen) -> bool:
             if event.type == pygame.QUIT:
                 return False
         
-        drawBackground(grid.theme,menuSurface,text_surf,screen)
+        drawBackground(grid.theme,menuSurface,text_surf,screen,tip1,tip2)
         drawTimers(grid,screen,gui_font)
         if drawButtons():
             return True
@@ -300,12 +301,14 @@ def updateGrid(grid,screen,moving_sprites):
         moving_sprites.draw(screen)
         moving_sprites.update(0.25)
     grid.Draw()
-def drawBackground(theme,menuSurface,text_surf,screen):
+def drawBackground(theme,menuSurface,text_surf,screen,tip1,tip2):
     screen.blit(theme.background, (0, 0))
     pygame.draw.rect(menuSurface,(180,188,188,150),(180,0,1860,325))
     pygame.draw.rect(menuSurface,(250,245,245,190),(180,0,1860,325),2)
     screen.blit(menuSurface, (0,0))
     screen.blit(text_surf,(780,140,400,40))
+    screen.blit(tip1,(1180,140,400,40))
+    screen.blit(tip2,(1180,160,400,40))
 def clearWallsFunc(grid):
     grid.frameFinished = False
     grid.replaceAll(WALL,EMPTY)
