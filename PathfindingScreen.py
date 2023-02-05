@@ -336,14 +336,14 @@ def blit_text(surface, text, pos, font, color=pygame.Color('black')):
         y += word_height  # Start on new row.
 def drawTimers(grid,screen,gui_font):
     if grid.explorationIsDone:
-        explorationTimer = gui_font.render("exploration time: " + str(grid.startExploration),True,'#FFFFFF')
+        explorationTimer = gui_font.render("exploration time: " + str(round(grid.startExploration,3)),True,'#FFFFFF')
     else:
-        explorationTimer = gui_font.render("exploration time: " + str(time.time()-grid.startExploration),True,'#FFFFFF')
+        explorationTimer = gui_font.render("exploration time: " + str(round(time.time()-grid.startExploration,3)),True,'#FFFFFF')
 
     if grid.travelIsDone:
-        travelTimer = gui_font.render("travel time: " + str(grid.startTravel),True,'#FFFFFF')
+        travelTimer = gui_font.render("travel time: " + str(round(grid.startTravel,3)),True,'#FFFFFF')
     else:
-        travelTimer = gui_font.render("travel time: " + str(time.time()-grid.startTravel),True,'#FFFFFF')
+        travelTimer = gui_font.render("travel time: " + str(round(time.time()-grid.startTravel,3)),True,'#FFFFFF')
 
     screen.blit(explorationTimer,(380,140,400,40))
     screen.blit(travelTimer,(380,160,400,40))
