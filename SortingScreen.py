@@ -1,116 +1,41 @@
 """Module for Sorting screen loop"""
 
 import random
+import time
 import pygame
 from dropdownmenu import dropdownmenu
-
-from theme import Theme
-
-dragging = False
-columns = []
-quickSortStarted = False
-mergeSortStarted = False
-heapSortStarted = False
-bubbleSortStarted = False
-
 from button import Button
-class SliderBall:
-    def __init__(self,x,y,width,screen,color, rect):
-        self.x = x
-        self.y = y
-        self.startPos = (x,y)
-        self.width = width
-        self.screen = screen
-        self.color = color
-        self.dragging = False
-        self.rect = pygame.Rect((self.x-15,self.y-15),(30,30))
-        self.parentRect = pygame.Rect(rect)
-    def Draw(self):
-        pygame.draw.circle(self.screen,(180,188,188,150),(self.x,self.y),15)
-        pygame.draw.circle(self.screen,self.color,(self.x,self.y),15,2)
-        self.rect = pygame.Rect((self.x-15,self.y-15),(30,30))
-        self.check_click()
-
-        return (self.x-self.startPos[0])/self.width
-
-    def check_click(self):
-        global dragging
-        mouse_pos = pygame.mouse.get_pos()
-        if pygame.mouse.get_pressed()[0]:
-            if self.parentRect.collidepoint(mouse_pos) and not dragging:
-                dragging = True
-            elif dragging and self.startPos[0]<mouse_pos[0]<(self.startPos[0] + self.width + 1):
-                self.x = mouse_pos[0]
-        elif dragging:
-            dragging = False
-            
-class Slider:
-    def __init__(self,min,max,rect,screen,color):
-        self.min = min
-        self.max = max
-        self.rect = rect
-        self.screen = screen
-        self.color = color
-        self.value = min
-        self.sliderBall = SliderBall(rect[0],rect[1]+(rect[3]/2),rect[2],self.screen,self.color, self.rect)
-    def Draw(self):
-        pygame.draw.rect(self.screen,self.color,self.rect,2,border_radius = 12)
-        self.value = self.min + (self.max-self.min)*(self.sliderBall.Draw())
-        return int(self.value)
-
-class Column:
-    def __init__(self, screen, color, x,y,width,height):
-        self.screen=screen
-        self.color=color
-        self.x=x
-        self.y=y
-        self.width=width
-        self.height=height
-        self.paintInside = False
-    def Draw(self, columnColor):
-        if self.paintInside:
-            pygame.draw.rect(self.screen, self.color, (self.x,self.y,self.width,self.height))
-            self.paintInside = False
-        else:
-            pygame.draw.rect(self.screen, columnColor, (self.x,self.y,self.width,self.height), 1)
-
-        self.color = (255, 255, 255)
-    
-    def replace(self, Column):
-        self.changeColor((255,0,0))
-        tempx = self.x
-        tempy = self.y
-        self.x = Column.x
-        Column.x = tempx
-        self.y = Column.y
-        Column.y = tempy
-    
-    def changeColor(self, color):
-        self.color = color
-        self.paintInside = True
-
+from theme import Theme
+from Column import Column
+from Slider import Slider
 
 
 def sortingScreen(screen) -> bool:
     """Main function of the module. Returns boolean when the loop ends. Returns false if the total program should be closed. Returns true otherwise."""
-    global columns
-    global quickSortStarted,mergeSortStarted,heapSortStarted,bubbleSortStarted
     running = True
+    class sortingScreen:
+        def __init__(self):
+            self.dragging = False
+            self.columns = []
+            self.quickSortStarted = False
+            self.mergeSortStarted = False
+            self.heapSortStarted = False
+            self.bubbleSortStarted = False
+            self.isVisualStarted = False
+            self.done = True
+
+    sortingScreenData = sortingScreen()
     initDone = False
-    finish = False
+    finish = True
     finIndex = 0
 
-    backwardImg = pygame.image.load('assets/backwards.png')
-    background4 = pygame.image.load('assets/background4.png')
-    background2 = pygame.image.load('assets/background2.png')
-    background3 = pygame.image.load('assets/background3.png')
     gui_font = pygame.font.Font(None,30)
     title_font = pygame.font.Font(None,50)
     text_surf = title_font.render("Sorting Visualizer",True,'#FFFFFF')
 
     shuffle = Button('Shuffle',300,40,(1120,260),5,screen,gui_font)
     theme = Button('theme 1',300,40,(1430,260),5,screen,gui_font)
-    algo = Button("Merge Sort",300,40,(810,260),5,screen,gui_font)
+    algo = Button("Quick Sort",300,40,(810,260),5,screen,gui_font)
     start = Button('Start',300,40,(810,210),5,screen,gui_font)
 
     shuffleIndex = 500
@@ -121,28 +46,26 @@ def sortingScreen(screen) -> bool:
     theme2 = Theme(1)
     theme3 = Theme(2)
 
-    themeDropDown = dropdownmenu(["theme 1","theme 2","theme 3"],(1430,310), screen,40,300,gui_font)
-    algoDropDown = dropdownmenu(["Merge Sort","Quick Sort","Heap Sort", "Bubble Sort"],(810,310), screen,40,300,gui_font)
+    themes = ["theme 1","theme 2","theme 3"]
+    algorithms = ["Quick Sort","Heap Sort", "Bubble Sort"]
+
+    themeDropDown = dropdownmenu(themes,(1430,310), screen,40,300,gui_font)
+    algoDropDown = dropdownmenu(algorithms,(810,310), screen,40,300,gui_font)
 
     themeToUse = "theme 1"
-    algoToUse = "Merge Sort"
-    backgroundToUse = background2
+    algoToUse = "Quick Sort" # "Merge Sort"
+    backgroundToUse = theme1.background
 
-    themeMenu = False
-    algoMenu = False
-
-
-    isVisualStarted = False
+    sortingScreenData.isVisualStarted = False
 
     menuSurface = pygame.Surface((1860,325), pygame.SRCALPHA)
 
 
-    slider = Slider(10,500,(260,260,490,20),screen,(255,255,255,150))
+    slider = Slider(10,500,(260,260,490,20),screen,(255,255,255,150),sortingScreenData)
     oldAmount = 10
-    columns = []
     columnColor = (255,255,255)
-    
-    backward = Button('',backwardImg.get_rect().width,backwardImg.get_rect().height,(200,120),5,screen,gui_font,backwardImg)
+    chronometer = 0
+    backward = Button('',Theme.backwardImg.get_rect().width,Theme.backwardImg.get_rect().height,(200,120),5,screen,gui_font,Theme.backwardImg)
     while running:
         
         
@@ -166,19 +89,17 @@ def sortingScreen(screen) -> bool:
 
         columnAmount = slider.Draw()
         if columnAmount != oldAmount:
-            columns = []
+            sortingScreenData.columns = []
             oldAmount = columnAmount
             shuffleIndex = columnAmount
 
         text_surf2 = gui_font.render("Column Amount: {}".format(columnAmount),True,'#FFFFFF')
 
         if theme.draw():
-            themeMenu = not themeMenu
-            algoMenu = False
+            themeDropDown.reveal()
         
         if algo.draw():
-            algoMenu = not algoMenu
-            themeMenu = False
+            algoDropDown.reveal()
 
 
 
@@ -187,161 +108,177 @@ def sortingScreen(screen) -> bool:
         columnWidth = 1500/columnAmount
         
         for i in range(columnAmount):
-            if len(columns) < columnAmount:
-                turnOffSorts()
+            if len(sortingScreenData.columns) < columnAmount:
+                turnOffSorts(sortingScreenData)
                 initDone = False
-                columns.append(Column(screen,(255, 255, 255), 210+i*columnWidth,350,columnWidth,i*(500/(columnAmount-1))+10))
-            else: # all columns are initilazed and ready to oparate
+                sortingScreenData.columns.append(Column(screen,(255, 255, 255), 210+i*columnWidth,350,columnWidth,i*(500/(columnAmount-1))+10))
+            else: # all sortingScreenData.columns are initilazed and ready to oparate
                 initDone = True
-            columns[i].Draw(columnColor)
+            sortingScreenData.columns[i].Draw(columnColor)
 
         if shuffle.draw() and initDone:
             shuffleIndex = 0
-            turnOffSorts()
+            turnOffSorts(sortingScreenData)
         if shuffleIndex < columnAmount:
             otherColumnIndex = random.randint(0,columnAmount-1)
-            replaceColumns(columns,shuffleIndex,otherColumnIndex)
+            replaceColumns(sortingScreenData,shuffleIndex,otherColumnIndex)
             shuffleIndex +=1
         if start.draw() and initDone:
-            isVisualStarted = True
+            sortingScreenData.done = False
+            sortingScreenData.isVisualStarted = True
+            chronometer = time.time()
 
-        if themeMenu:
-            themeToUsetemp = themeDropDown.Draw()
-            if themeToUsetemp != -1:
-                theme.text = themeToUsetemp
-                themeToUse = themeToUsetemp
+        if themeDropDown.isOpen:
+            themeToUse = themeDropDown.Draw()
+            if themeToUse != -1:
+                theme.text = themeToUse
                 if themeToUse == "theme 1":
                     columnColor = theme1.Color
                     backgroundToUse = theme1.background
-                if themeToUse == "theme 2":
+                elif themeToUse == "theme 2":
                     columnColor =theme2.Color
                     backgroundToUse = theme2.background
-                if themeToUse == "theme 3":
+                elif themeToUse == "theme 3":
                     columnColor =theme3.Color
                     backgroundToUse = theme3.background
-                themeMenu = False
-        if algoMenu:
+                themeDropDown.reveal()
+        elif algoDropDown.isOpen:
             algoToUsetemp = algoDropDown.Draw()
             if algoToUsetemp != -1:
                 algo.text = algoToUsetemp
                 algoToUse = algoToUsetemp
-                algoMenu = False
+                algoDropDown.reveal()
         
-        if isVisualStarted and initDone:
+        if sortingScreenData.isVisualStarted and initDone:
             if algoToUse == "Quick Sort":
-                a = quick_sort(columns,0,columnAmount-1,columnColor)
-                quickSortStarted = True
-                isVisualStarted = False
-            if algoToUse == "Merge Sort":
-                b = mergeSort(columns, 0, columnAmount-1)
-                mergeSortStarted = True
-                isVisualStarted = False
-            if algoToUse == "Heap Sort":
-                c = heapSort(columns)
-                heapSortStarted = True
-                isVisualStarted = False
-            if algoToUse == "Bubble Sort":
-                d = bubbleSort(columns)
-                bubbleSortStarted = True
-                isVisualStarted = False
+                quick_sorter = quick_sort(sortingScreenData,0,columnAmount-1,columnColor)
+                sortingScreenData.quickSortStarted = True
+                sortingScreenData.isVisualStarted = False
+            elif algoToUse == "Merge Sort":
+                mergeSorter = mergeSort(sortingScreenData, 0, columnAmount-1)
+                sortingScreenData.mergeSortStarted = True
+                sortingScreenData.isVisualStarted = False
+            elif algoToUse == "Heap Sort":
+                heapSorter = heapSort(sortingScreenData)
+                sortingScreenData.heapSortStarted = True
+                sortingScreenData.isVisualStarted = False
+            elif algoToUse == "Bubble Sort":
+                bubbleSorter = bubbleSort(sortingScreenData)
+                sortingScreenData.bubbleSortStarted = True
+                sortingScreenData.isVisualStarted = False
         
 
 
-        if quickSortStarted:
+        if sortingScreenData.quickSortStarted:
             try:
-                next(a)
+                next(quick_sorter)
             except StopIteration:
                 finish = True
-                quickSortStarted = False
+                sortingScreenData.quickSortStarted = False
+                chronometer = time.time() - chronometer
+                sortingScreenData.done = True
 
-        if mergeSortStarted: #and False:
+        if sortingScreenData.mergeSortStarted:
             try:
-                next(b)
+                next(mergeSorter)
             except StopIteration:
                 finish = True
-                mergeSortStarted = False
+                sortingScreenData.mergeSortStarted = False
+                chronometer = time.time() - chronometer
+                sortingScreenData.done = True
 
-        if heapSortStarted:
+        if sortingScreenData.heapSortStarted:
             try:
-                next(c)
+                next(heapSorter)
             except StopIteration:
                 finish = True
-                heapSortStarted = False
+                sortingScreenData.heapSortStarted = False
+                chronometer = time.time() - chronometer
+                sortingScreenData.done = True
         
-        if bubbleSortStarted:
+        if sortingScreenData.bubbleSortStarted:
             try:
-                next(d)
+                next(bubbleSorter)
             except StopIteration:
                 finish = True
-                bubbleSortStarted = False
+                sortingScreenData.bubbleSortStarted = False
+                chronometer = time.time() - chronometer
+                sortingScreenData.done = True
 
         if finish:
             if finIndex < columnAmount +2:
                 initDone = False
                 if finIndex < columnAmount:
-                    columns[finIndex].changeColor((0,255,0))
+                    sortingScreenData.columns[finIndex].changeColor((0,255,0))
                 if 1<finIndex < columnAmount+1:
-                    columns[finIndex-1].changeColor((0,255,0))
+                    sortingScreenData.columns[finIndex-1].changeColor((0,255,0))
                 if 2<finIndex:
-                    columns[finIndex-2].changeColor((0,255,0))
+                    sortingScreenData.columns[finIndex-2].changeColor((0,255,0))
                 finIndex+= 1
             else:
                 initDone = True
                 finIndex = 0
                 finish = False
-
+        drawTimers(sortingScreenData,chronometer,screen,gui_font)
         pygame.display.update()
     return True
 
-def turnOffSorts():
-    global quickSortStarted,mergeSortStarted,heapSortStarted,bubbleSortStarted
-    quickSortStarted = False
-    mergeSortStarted = False
-    heapSortStarted = False
-    bubbleSortStarted = False
+def drawTimers(sortingScreenData,chronometer,screen,gui_font):
+    if sortingScreenData.done:
+        executionTime = gui_font.render("timer: " + str(round(chronometer,3)),True,'#FFFFFF')
+    else:
+        executionTime = gui_font.render("timer: " + str(round(time.time()-chronometer,3)),True,'#FFFFFF')
 
-def replaceColumns(columns,firstIndex,secondIndex):
-    columns[firstIndex].replace(columns[secondIndex])
-    replaceIndex(columns,firstIndex,secondIndex)
+    screen.blit(executionTime,(380,140,400,40))
 
-def replaceIndex(columns,firstIndex,secondIndex):
-    temp =columns[firstIndex]
-    columns[firstIndex] = columns[secondIndex]
-    columns[secondIndex] = temp
+def turnOffSorts(sortingScreenData):
+    sortingScreenData.quickSortStarted = False
+    sortingScreenData.mergeSortStarted = False
+    sortingScreenData.heapSortStarted = False
+    sortingScreenData.bubbleSortStarted = False
 
-def partition(columns, start, end, columnColor):
-    pivot = columns[start]
+def replaceColumns(sortingScreenData,firstIndex,secondIndex):
+    sortingScreenData.columns[firstIndex].replace(sortingScreenData.columns[secondIndex])
+    replaceIndex(sortingScreenData,firstIndex,secondIndex)
+
+def replaceIndex(sortingScreenData,firstIndex,secondIndex):
+    temp =sortingScreenData.columns[firstIndex]
+    sortingScreenData.columns[firstIndex] = sortingScreenData.columns[secondIndex]
+    sortingScreenData.columns[secondIndex] = temp
+
+def partition(sortingScreenData, start, end, columnColor):
+    pivot = sortingScreenData.columns[start]
     low = start + 1
     high = end
 
     while True:
-        while low <= high and columns[high].height >= pivot.height:
+        while low <= high and sortingScreenData.columns[high].height >= pivot.height:
             high = high - 1
 
-        while low <= high and columns[low].height <= pivot.height:
+        while low <= high and sortingScreenData.columns[low].height <= pivot.height:
             low = low + 1
 
         if low <= high:
             yield
-            replaceColumns(columns,low,high)
+            replaceColumns(sortingScreenData,low,high)
         else:
             break
 
-    replaceColumns(columns,start,high)
+    replaceColumns(sortingScreenData,start,high)
     yield high
 
-def quick_sort(columns, start, end, columnColor):
+def quick_sort(sortingScreenData, start, end, columnColor):
     if start >= end:
         return
     run = True
-    p = partition(columns, start, end, columnColor)
+    p = partition(sortingScreenData, start, end, columnColor)
 
     while run:
         try:
             yield
             a = next(p)
             if a != None:
-                funcs = [quick_sort(columns, start, a-1, columnColor),quick_sort(columns, a+1, end, columnColor)]
+                funcs = [quick_sort(sortingScreenData, start, a-1, columnColor),quick_sort(sortingScreenData, a+1, end, columnColor)]
 
                 for func in funcs:
                     try:
@@ -351,75 +288,75 @@ def quick_sort(columns, start, end, columnColor):
         except StopIteration:
             run = False
 
-def merge(columns, start, mid, end):
+def merge(sortingScreenData, start, mid, end):
     start2 = mid + 1
     # If the direct merge is already sorted
-    if (columns[mid].height <= columns[start2].height):
+    if (sortingScreenData.columns[mid].height <= sortingScreenData.columns[start2].height):
         return
     # Two pointers to maintain start
     # of both columnsays to merge
     while (start <= mid and start2 <= end):
         # If element 1 is in right place
-        if (columns[start].height <= columns[start2].height):
+        if (sortingScreenData.columns[start].height <= sortingScreenData.columns[start2].height):
             start += 1
         else:
-            #value = columns[start2].height
+            #value = sortingScreenData.columns[start2].height
             index = start2
             while (index != start):
-                #columns[index].height = columns[index - 1].height
-                replaceColumns(columns,index,index-1)
+                #sortingScreenData.columns[index].height = sortingScreenData.columns[index - 1].height
+                replaceColumns(sortingScreenData,index,index-1)
                 index -= 1
-            #columns[start].height = value
-            replaceColumns(columns,start2,start)
+            #sortingScreenData.columns[start].height = value
+            replaceColumns(sortingScreenData,start2,start)
             start += 1
             mid += 1
             start2 += 1
-def mergeSort(columns, l, r):
+
+def mergeSort(sortingScreenData, l, r):
     if (l < r):
         # Same as (l + r) / 2, but avoids overflow
         # for large l and r
         m = l + (r - l) // 2
         # Sort first and second halves
-        m1 = mergeSort(columns, l, m)
+        m1 = mergeSort(sortingScreenData, l, m)
         try:
             next(m1)
         except StopIteration:
             pass
-        m2 = mergeSort(columns, m + 1, r)
+        m2 = mergeSort(sortingScreenData, m + 1, r)
         try:
-            next(m1)
+            next(m2)
         except StopIteration:
             pass
-        merge(columns, l, m, r)
+        merge(sortingScreenData, l, m, r)
     yield
 
-def heapify(columns, n, i):
+def heapify(sortingScreenData, n, i):
     largest = i
     l = 2 * i + 1
     r = 2 * i + 2
 
-    if l < n and columns[i].height < columns[l].height:
+    if l < n and sortingScreenData.columns[i].height < sortingScreenData.columns[l].height:
         largest = l
 
-    if r < n and columns[largest].height < columns[r].height:
+    if r < n and sortingScreenData.columns[largest].height < sortingScreenData.columns[r].height:
         largest = r
 
     if largest != i:
         yield
-        replaceColumns(columns,i,largest)
+        replaceColumns(sortingScreenData,i,largest)
         try:
-            yield from heapify(columns, n, largest)
+            yield from heapify(sortingScreenData, n, largest)
         except StopIteration:
             pass
 
-
-def heapSort(columns):
-    n = len(columns)
+def heapSort(sortingScreenData):
+    n = len(sortingScreenData.columns)
 
     funcs = []
 
     for i in range(n//2, -1, -1):
-        funcs.append(heapify(columns, n, i))
+        funcs.append(heapify(sortingScreenData, n, i))
     for func in funcs:
         try:
             yield from func
@@ -428,7 +365,7 @@ def heapSort(columns):
     funcs = []
     for i in range(n-1, 0, -1):
         funcs.append(i)
-        funcs.append(heapify(columns, i, 0))
+        funcs.append(heapify(sortingScreenData, i, 0))
     
     for func in funcs:
         try:
@@ -436,15 +373,15 @@ def heapSort(columns):
         except StopIteration:
             funcs.remove(func)
         except TypeError:
-            replaceColumns(columns,func,0)
+            replaceColumns(sortingScreenData,func,0)
 
-def bubbleSort(columns):
-    n = len(columns)
+def bubbleSort(sortingScreenData):
+    n = len(sortingScreenData.columns)
     for i in range(n-1):
         for j in range(0, n-i-1):
-            if columns[j].height > columns[j+1].height:
+            if sortingScreenData.columns[j].height > sortingScreenData.columns[j+1].height:
                 yield
-                replaceColumns(columns,j,j+1)
+                replaceColumns(sortingScreenData,j,j+1)
 
 if __name__ == '__main__':
     #initilaze the pygame
