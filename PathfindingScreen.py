@@ -1,5 +1,6 @@
 """Module for Pathfinding screen loop"""
 
+import math
 from queue import PriorityQueue
 import random
 import pygame
@@ -118,11 +119,18 @@ def pathfindingScreen(screen) -> bool:
         if clearPathButton.draw():
             clearPathFunc(grid)
 
+    alienImg = pygame.image.load('assets/alien.jpg')
+    alienTimer = 0
+    speed = 0.005
 
     #========Main loop of this method============
     while True:
         clock.tick(60) #setting fps to 60
-
+        
+        alienTimer += speed
+        pos = (alienTimer*150+200,500 + math.sin(alienTimer)*300)
+        if pos[0] > 1920:
+            alienTimer = -1
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
@@ -291,7 +299,6 @@ def pathfindingScreen(screen) -> bool:
                     elif not grid.travelIsDone:
                         grid.travelIsDone = True
                         grid.startTravel = time.time() - grid.startTravel
-
         
         pygame.display.update()
 

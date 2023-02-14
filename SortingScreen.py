@@ -34,7 +34,7 @@ def sortingScreen(screen) -> bool:
     text_surf = title_font.render("Sorting Visualizer",True,'#FFFFFF')
 
     shuffle = Button('Shuffle',300,40,(1120,260),5,screen,gui_font)
-    theme = Button('theme 1',300,40,(1430,260),5,screen,gui_font)
+    theme = Button('sea theme',300,40,(1430,260),5,screen,gui_font)
     algo = Button("Quick Sort",300,40,(810,260),5,screen,gui_font)
     start = Button('Start',300,40,(810,210),5,screen,gui_font)
 
@@ -46,13 +46,13 @@ def sortingScreen(screen) -> bool:
     theme2 = Theme(1)
     theme3 = Theme(2)
 
-    themes = ["theme 1","theme 2","theme 3"]
+    themes = ["sea theme","space theme","pastel theme"]
     algorithms = ["Quick Sort","Heap Sort", "Bubble Sort"]
 
     themeDropDown = dropdownmenu(themes,(1430,310), screen,40,300,gui_font)
     algoDropDown = dropdownmenu(algorithms,(810,310), screen,40,300,gui_font)
 
-    themeToUse = "theme 1"
+    themeToUse = "sea theme"
     algoToUse = "Quick Sort" # "Merge Sort"
     backgroundToUse = theme1.background
 
@@ -132,13 +132,13 @@ def sortingScreen(screen) -> bool:
             themeToUse = themeDropDown.Draw()
             if themeToUse != -1:
                 theme.text = themeToUse
-                if themeToUse == "theme 1":
+                if themeToUse == "sea theme":
                     columnColor = theme1.Color
                     backgroundToUse = theme1.background
-                elif themeToUse == "theme 2":
+                elif themeToUse == "space theme":
                     columnColor =theme2.Color
                     backgroundToUse = theme2.background
-                elif themeToUse == "theme 3":
+                elif themeToUse == "pastel theme":
                     columnColor =theme3.Color
                     backgroundToUse = theme3.background
                 themeDropDown.reveal()
