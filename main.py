@@ -1,6 +1,6 @@
 import pygame
 from button import Button
-import PathfindingScreen
+import PathfindingScreen as PathfindingScreen
 import SortingScreen
 
 #initilaze the pygame
