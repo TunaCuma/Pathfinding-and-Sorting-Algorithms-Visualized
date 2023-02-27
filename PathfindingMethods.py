@@ -66,7 +66,7 @@ def breadthFirstSearch(grid,startX, startY, endX, endY):
                 if cache[current[0] + coordinate[0]][current[1] + coordinate[1]] == cache[current[0]][current[1]] - 1:
                     current = (current[0] + coordinate[0], current[1] + coordinate[1])
                     break
-    return bfsTraversalOrder, path
+    return bfsTraversalOrder, path, isReached
 
 def depthFirstSearch(grid, startX, startY, endX, endY):
     dfsTraversalOrder = []
@@ -105,7 +105,7 @@ def depthFirstSearch(grid, startX, startY, endX, endY):
                         current = (current[0] + coordinate[0], current[1] + coordinate[1])
                         break
 
-    return dfsTraversalOrder , path
+    return dfsTraversalOrder , path, isReached
 
 def greedyBestSearch(grid,startX, startY, endX, endY):
     greedyBestSearchTraversalOrder = []
@@ -177,7 +177,7 @@ def greedyBestSearch(grid,startX, startY, endX, endY):
                     current = (current[0] + coordinate[0], current[1] + coordinate[1])
                     break
 
-    return greedyBestSearchTraversalOrder, path
+    return greedyBestSearchTraversalOrder, path, isReached
 
 def Dijkstra(grid,startX, startY, endX, endY):
     DijkstraTraversalOrder = []
@@ -219,7 +219,7 @@ def Dijkstra(grid,startX, startY, endX, endY):
                     current = (distances[current[1][0] + coordinate[0]][current[1][1] + coordinate[1]],(current[1][0] + coordinate[0], current[1][1] + coordinate[1]))
                     break
 
-    return DijkstraTraversalOrder, path
+    return DijkstraTraversalOrder, path, isReached
 
 def aStar(grid, start, end):
     frontier = PriorityQueue()
@@ -258,4 +258,4 @@ def aStar(grid, start, end):
         path.append(pathTemp)
         pathTemp = came_from[pathTemp]
     
-    return aStarTraversal , path
+    return aStarTraversal, path, isReached

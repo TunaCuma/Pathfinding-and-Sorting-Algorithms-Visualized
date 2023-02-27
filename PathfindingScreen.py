@@ -245,15 +245,15 @@ def pathfindingScreen(screen) -> bool:
                     bombToDestPath.reverse()
                 else:
                     if algorithmsButton.text == 'Breadth-first Search':
-                        travelerToDest, travelerToDestPath = breadthFirstSearch(grid, grid.travelerCoords[0],grid.travelerCoords[1],grid.destinationCoords[0], grid.destinationCoords[1])
+                        travelerToDest, travelerToDestPath, isReached = breadthFirstSearch(grid, grid.travelerCoords[0],grid.travelerCoords[1],grid.destinationCoords[0], grid.destinationCoords[1])
                     elif algorithmsButton.text == 'Depth-first Search':
-                        travelerToDest, travelerToDestPath = depthFirstSearch(grid, grid.travelerCoords[0],grid.travelerCoords[1],grid.destinationCoords[0],grid.destinationCoords[1])
+                        travelerToDest, travelerToDestPath, isReached = depthFirstSearch(grid, grid.travelerCoords[0],grid.travelerCoords[1],grid.destinationCoords[0],grid.destinationCoords[1])
                     elif algorithmsButton.text =='Greedy Best-first Search':
-                        travelerToDest, travelerToDestPath = greedyBestSearch(grid, grid.travelerCoords[0],grid.travelerCoords[1],grid.destinationCoords[0],grid.destinationCoords[1])
+                        travelerToDest, travelerToDestPath, isReached = greedyBestSearch(grid, grid.travelerCoords[0],grid.travelerCoords[1],grid.destinationCoords[0],grid.destinationCoords[1])
                     elif algorithmsButton.text == "Dijkstra's Algorithm":
-                        travelerToDest , travelerToDestPath = Dijkstra(grid, grid.travelerCoords[0],grid.travelerCoords[1],grid.destinationCoords[0],grid.destinationCoords[1])
+                        travelerToDest , travelerToDestPath, isReached = Dijkstra(grid, grid.travelerCoords[0],grid.travelerCoords[1],grid.destinationCoords[0],grid.destinationCoords[1])
                     elif algorithmsButton.text == 'A* Search':
-                        travelerToDest, travelerToDestPath = aStar(grid, grid.travelerCoords, grid.destinationCoords)
+                        travelerToDest, travelerToDestPath, isReached = aStar(grid, grid.travelerCoords, grid.destinationCoords)
                     travelerToDest.pop(0)
                     travelerToDestPath.reverse()
                                 
@@ -294,7 +294,7 @@ def pathfindingScreen(screen) -> bool:
                         grid.travelIsDone = False
                         grid.startTravel = time.time()
                         grid.startExploration = grid.startTravel - grid.startExploration
-                    elif travelerToDestPath:
+                    elif travelerToDestPath and isReached:
                         grid.grid[travelerToDestPath[0][0]][travelerToDestPath[0][1]].change_status(FAKE_TRAVELER)
                         travelerToDestPath.pop(0)
                     elif not grid.travelIsDone:
