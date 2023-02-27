@@ -41,6 +41,7 @@ def pathfindingScreen(screen) -> bool:
 
     #Initilazing the grid
     grid = Grid(51,21,30,195,340, screen, moving_sprites, theme1)
+    gridBefore = None
     moving_sprites = grid.moving_sprites
 
 
@@ -83,6 +84,7 @@ def pathfindingScreen(screen) -> bool:
             return True
 
         if startButton.draw() and not grid.isVisualStarted:
+            grid.saveVersion()
             grid.isVisualStarted = True
             grid.initializedPaths = False
 
@@ -330,10 +332,7 @@ def clearPathFunc(grid):
     grid.initializedPaths = False
     grid.startTravel = 0
     grid.startExploration = 0
-    for i in range(grid.xCount):
-        for j in range(grid.yCount):
-            if grid.grid[i][j].status not in [WALL,TRAVELER,DESTINATION,BOMB,WEIGHTEDNOD]:
-                grid.grid[i][j].change_status(EMPTY)
+    grid.returnLatestVersion()
 def blit_text(surface, text, pos, font, color=pygame.Color('black')):
     words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
     space = font.size(' ')[0]  # The width of a space.

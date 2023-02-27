@@ -24,12 +24,20 @@ class Grid(object):
         self.startExploration = 0
         self.travelIsDone = True
         self.explorationIsDone = True
+        self.gridBefore = []
         self.grid = []
         self.moving_sprites = moving_sprites
         self.theme = theme
         
+        
         self.initilazeGrid()
-        self.initilazeDestinationAndTraveler(self.travelerCoords,self.destinationCoords)
+        self.initilazeDestinationAndTraveler(self.travelerCoords,self.destinationCoords),
+    
+    def saveVersion(self):  
+        self.gridBefore = self.grid
+    
+    def returnToLatestVersion(self):
+        self.grid = self.gridBefore
 
     def Draw(self):
         for i in range(self.xCount):

@@ -1,4 +1,4 @@
-                    GREEDY-BEST FIRST SEARCH
+                            GREEDY-BEST FIRST SEARCH
     Greedy best search is an algorithm we made up as a result of 
 trying to improve the depth-first search algorithm in a similar 
 way to the development of the A* algorithm by making additions to 
