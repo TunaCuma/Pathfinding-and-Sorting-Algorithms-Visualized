@@ -7,7 +7,7 @@ def createAbstractGrid(grid, endX, endY):
 
     for i in range(grid.xCount):
         for j in range(grid.yCount):
-            if grid.grid[i][j].status in [EMPTY,TRIED]:
+            if grid.grid[i][j].status in [EMPTY,TRIED,WEIGHTEDNOD]:
                 absGrid[i][j] = 0
 
     absGrid[endX][endY] = 2
