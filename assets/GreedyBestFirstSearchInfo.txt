@@ -1,0 +1,9 @@
+                    GREEDY-BEST FIRST SEARCH
+    Greedy best search is an algorithm we made up as a result of 
+trying to improve the depth-first search algorithm in a similar 
+way to the development of the A* algorithm by making additions to 
+the Dijkstra algorithm.
+    Unlike the depth-first search, the algorithm traverses in a 
+direction that minimizes the Manhattan distance to the target instead 
+of traversing fixed instructions. Like depth-first search, it doesn't 
+work on weighted graphs nor guarantee to find the shortest path.
