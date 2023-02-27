@@ -1,5 +1,6 @@
 from cell import Cell
 from constants import *
+import copy
 
 class Grid(object):
 
@@ -33,11 +34,15 @@ class Grid(object):
         self.initilazeGrid()
         self.initilazeDestinationAndTraveler(self.travelerCoords,self.destinationCoords),
     
-    def saveVersion(self):  
-        self.gridBefore = self.grid
+    def saveStatusVersion(self):  
+        for i in range(len(self.grid)):
+            for j in range(len(self.grid[0])):
+                self.gridBefore[i][j] = self.grid[i][j].status
     
-    def returnToLatestVersion(self):
-        self.grid = self.gridBefore
+    def returnStatutesToLatestVersion(self):
+        for i in range(len(self.grid)):
+            for j in range(len(self.grid[0])):
+                self.grid[i][j].change_status(self.gridBefore[i][j])
 
     def Draw(self):
         for i in range(self.xCount):
@@ -49,8 +54,10 @@ class Grid(object):
                 self.grid[i][j].change_status(EMPTY)
     def initilazeGrid(self):
         for i in range(self.xCount):
+            self.gridBefore.append([])
             self.grid.append([])
             for j in range(self.yCount):
+                self.gridBefore[i].append(EMPTY)
                 self.grid[i].append(Cell(self.cellSize, (0,0,0,0), self.win, self.pos[0]+(self.cellSize*i), self.pos[1]+(self.cellSize*j),i,j,self.theme,self))
                 self.moving_sprites.add(self.grid[i][j])
         self.update_theme(self.theme)
@@ -71,6 +78,8 @@ class Grid(object):
     def initilazeDestinationAndTraveler(self,travelerCoords,destinationCoords):
         self.travelerCoords = travelerCoords
         self.destinationCoords = destinationCoords
+        self.gridBefore[travelerCoords[0]][travelerCoords[1]] = TRAVELER
+        self.gridBefore[destinationCoords[0]][destinationCoords[1]] = DESTINATION
         self.grid[travelerCoords[0]][travelerCoords[1]].change_status(TRAVELER)
         self.grid[destinationCoords[0]][destinationCoords[1]].change_status(DESTINATION)
     def update_theme(self, theme):

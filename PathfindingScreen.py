@@ -41,7 +41,6 @@ def pathfindingScreen(screen) -> bool:
 
     #Initilazing the grid
     grid = Grid(51,21,30,195,340, screen, moving_sprites, theme1)
-    gridBefore = None
     moving_sprites = grid.moving_sprites
 
 
@@ -63,7 +62,7 @@ def pathfindingScreen(screen) -> bool:
     themeButton = Button(themeToUse,300,40,(1120,260),5,screen,gui_font)
 
     #Initilazing dropdown menus
-    algorithmChoices = ['Breadth-first Search','Depth-first Search','Greedy Best-first Search',"Dijkstra's Algorithm",'A* Search']
+    algorithmChoices = ['Breadth-first Search','Depth-first Search','A* Search','Greedy Best-first Search',"Dijkstra's Algorithm"]
     speedChoices = ["Slow","Average","Fast"]
     themeChoices = ["Sea Theme","Space Theme","Pastel Theme"]
     mazesAndPatternsChoices = ["Recursive Division","Recursive Division (vertical skew)","Recursive Division (horizontal skew)","Basic Random Maze","Basic Weight Maze","Simple Stair Pattern"]
@@ -84,7 +83,7 @@ def pathfindingScreen(screen) -> bool:
             return True
 
         if startButton.draw() and not grid.isVisualStarted:
-            grid.saveVersion()
+            grid.saveStatusVersion()
             grid.isVisualStarted = True
             grid.initializedPaths = False
 
@@ -332,7 +331,7 @@ def clearPathFunc(grid):
     grid.initializedPaths = False
     grid.startTravel = 0
     grid.startExploration = 0
-    grid.returnLatestVersion()
+    grid.returnStatutesToLatestVersion()
 def blit_text(surface, text, pos, font, color=pygame.Color('black')):
     words = [word.split(' ') for word in text.splitlines()]  # 2D array where each row is a list of words.
     space = font.size(' ')[0]  # The width of a space.
