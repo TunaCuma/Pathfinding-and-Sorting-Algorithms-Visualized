@@ -1,4 +1,4 @@
-from constants import*
+from constants import Constants
 from queue import PriorityQueue
 
 def createAbstractGrid(grid, endX, endY):
@@ -7,7 +7,7 @@ def createAbstractGrid(grid, endX, endY):
 
     for i in range(grid.xCount):
         for j in range(grid.yCount):
-            if grid.grid[i][j].status in [EMPTY,TRIED,WEIGHTEDNOD]:
+            if grid.grid[i][j].status in [Constants.EMPTY,Constants.TRIED,Constants.WEIGHTEDNOD]:
                 absGrid[i][j] = 0
 
     absGrid[endX][endY] = 2
@@ -20,10 +20,10 @@ def createAbsGraph(grid, endX, endY):
 
     for i in range(grid.xCount):
         for j in range(grid.yCount):
-            if grid.grid[i][j].status == EMPTY or grid.grid[i][j].status == TRIED or grid.grid[i][j].status == TRAVELER:
+            if grid.grid[i][j].status == Constants.EMPTY or grid.grid[i][j].status == Constants.TRIED or grid.grid[i][j].status == Constants.TRAVELER:
                 absGraph[i][j] = 1
-            elif grid.grid[i][j].status == WEIGHTEDNOD:
-                absGraph[i][j] = 2
+            elif grid.grid[i][j].status == Constants.WEIGHTEDNOD:
+                absGraph[i][j] = grid.grid[i][j].weight
 
     absGraph[endX][endY] = 0
 

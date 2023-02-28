@@ -1,14 +1,15 @@
 """Module for Pathfinding screen loop"""
 
 import math
-from queue import PriorityQueue
-import random
+from typing import Text
 import pygame
 from button import Button
+
+
 from dropdownmenu import dropdownmenu
 from theme import Theme
 from grid import Grid
-from constants import *
+from constants import Constants
 from PathfindingMethods import *
 from MazeAndPatternAlgorithms import *
 import time
@@ -43,8 +44,6 @@ def pathfindingScreen(screen) -> bool:
     grid = Grid(51,21,30,195,340, screen, moving_sprites, theme1)
     moving_sprites = grid.moving_sprites
 
-
-
     #Initilazing title
     text_surf = title_font.render("Pathfinding Visualizer",True,'#FFFFFF')
     tip1 = gui_font.render("left click: wall & erase wall",True,'#FFFFFF')
@@ -60,6 +59,8 @@ def pathfindingScreen(screen) -> bool:
     clearPathButton = Button('Clear Path',300,40,(500,210),5,screen,gui_font)
     speedButton = Button('Speed: Fast',300,40,(190,260),5,screen,gui_font)
     themeButton = Button(themeToUse,300,40,(1120,260),5,screen,gui_font)
+    decreaseWeightButton = Button("Decrease",95,20,(500,305),5,screen, gui_font)
+    increaseWeightButton = Button("Increase",95,20,(705,305),5,screen, gui_font)
 
     #Initilazing dropdown menus
     algorithmChoices = ['Breadth-first Search','Depth-first Search','Greedy Best-first Search',"Dijkstra's Algorithm",'A* Search']
@@ -101,17 +102,24 @@ def pathfindingScreen(screen) -> bool:
 
         if addBombButton.draw() and not grid.isVisualStarted and not startRecursionMaze:
             if not grid.bombAdded:
-                grid.getFirstCell(EMPTY).change_status(BOMB)
+                grid.getFirstCell(Constants.EMPTY).change_status(Constants.BOMB)
             else:
-                grid.getFirstCell(BOMB).change_status(EMPTY)
+                grid.getFirstCell(Constants.BOMB).change_status(Constants.EMPTY)
             grid.bombAdded = not grid.bombAdded
+        
+        if increaseWeightButton.draw():
+            Constants.increaseWeight()
 
+        if decreaseWeightButton.draw():
+            Constants.decreaseWeight()
+        
         if clearGridButton.draw():
             grid.emptyGrid()
             grid.initilazeDestinationAndTraveler((1,1),(49,19))
             grid.isVisualStarted = False
             grid.initializedPaths = False
             grid.bombAdded = False
+            grid.saveStatusVersion()
 
         if clearWallsButton.draw():
             clearWeights(grid)
@@ -141,6 +149,10 @@ def pathfindingScreen(screen) -> bool:
         if drawButtons():
             return True
         updateGrid(grid,screen,moving_sprites)
+
+        #Weight text
+        text = gui_font.render("Weight: {}".format(Constants.weightedNodeVal),1,(0,0,0))
+        screen.blit(text,(600,302))
 
         #=========drawing and checking dropdown menus============
         if dropdownmenu.dropdownIsOpen:
@@ -173,12 +185,12 @@ def pathfindingScreen(screen) -> bool:
                         startFraming = True
                         startRecursionMaze = True
                         f = frame(grid,51,21)
-                        rM = RecursionMaze(grid,1,49,1,19,VERTICAL)
+                        rM = RecursionMaze(grid,1,49,1,19,Constants.VERTICAL)
                     elif selectedMaze == "Recursive Division (horizontal skew)":
                         startFraming = True
                         startRecursionMaze = True
                         f = frame(grid,51,21)
-                        rM = RecursionMaze(grid,1,49,1,19,HORIZONTAL)
+                        rM = RecursionMaze(grid,1,49,1,19,Constants.HORIZONTAL)
                     elif selectedMaze == "Basic Random Maze":
                         basicMaze(grid)
                     elif selectedMaze == "Basic Weight Maze":
@@ -262,14 +274,14 @@ def pathfindingScreen(screen) -> bool:
                 grid.startTravel = 0
                 grid.startExploration = time.time()
             else:
-                grid.replaceAll(FAKE_TRAVELER,RIGHT_PATH)
+                grid.replaceAll(Constants.FAKE_TRAVELER,Constants.RIGHT_PATH)
                 pygame.time.wait(speedValue)
                 if grid.bombAdded:
                     if travelerToBomb:
-                        grid.grid[travelerToBomb[0][0]][travelerToBomb[0][1]].change_status(TRIED)
+                        grid.grid[travelerToBomb[0][0]][travelerToBomb[0][1]].change_status(Constants.TRIED)
                         travelerToBomb.pop(0)
                     elif bombToDest:
-                        grid.grid[bombToDest[0][0]][bombToDest[0][1]].change_status(TRIED2)
+                        grid.grid[bombToDest[0][0]][bombToDest[0][1]].change_status(Constants.TRIED2)
                         bombToDest.pop(0)
                     elif not grid.explorationIsDone:
                         grid.explorationIsDone = True
@@ -277,17 +289,17 @@ def pathfindingScreen(screen) -> bool:
                         grid.startTravel = time.time()
                         grid.startExploration = grid.startTravel - grid.startExploration
                     elif travelerToBombPath:
-                        grid.grid[travelerToBombPath[0][0]][travelerToBombPath[0][1]].change_status(FAKE_TRAVELER)
+                        grid.grid[travelerToBombPath[0][0]][travelerToBombPath[0][1]].change_status(Constants.FAKE_TRAVELER)
                         travelerToBombPath.pop(0)
                     elif bombToDestPath:
-                        grid.grid[bombToDestPath[0][0]][bombToDestPath[0][1]].change_status(FAKE_TRAVELER)
+                        grid.grid[bombToDestPath[0][0]][bombToDestPath[0][1]].change_status(Constants.FAKE_TRAVELER)
                         bombToDestPath.pop(0)
                     elif not grid.travelIsDone:
                         grid.travelIsDone = True
                         grid.startTravel = time.time() - grid.startTravel
                 else:
                     if travelerToDest:
-                        grid.grid[travelerToDest[0][0]][travelerToDest[0][1]].change_status(TRIED)
+                        grid.grid[travelerToDest[0][0]][travelerToDest[0][1]].change_status(Constants.TRIED)
                         travelerToDest.pop(0)
                     elif not grid.explorationIsDone:
                         grid.explorationIsDone = True
@@ -295,7 +307,7 @@ def pathfindingScreen(screen) -> bool:
                         grid.startTravel = time.time()
                         grid.startExploration = grid.startTravel - grid.startExploration
                     elif travelerToDestPath and isReached:
-                        grid.grid[travelerToDestPath[0][0]][travelerToDestPath[0][1]].change_status(FAKE_TRAVELER)
+                        grid.grid[travelerToDestPath[0][0]][travelerToDestPath[0][1]].change_status(Constants.FAKE_TRAVELER)
                         travelerToDestPath.pop(0)
                     elif not grid.travelIsDone:
                         grid.travelIsDone = True
@@ -321,9 +333,9 @@ def drawBackground(theme,menuSurface,text_surf,screen,tip1,tip2):
     screen.blit(tip2,(1180,160,400,40))
 def clearWallsFunc(grid):
     grid.frameFinished = False
-    grid.replaceAll(WALL,EMPTY)
+    grid.replaceAll(Constants.WALL,Constants.EMPTY)
 def clearWeights(grid):
-    grid.replaceAll(WEIGHTEDNOD,EMPTY)
+    grid.replaceAll(Constants.WEIGHTEDNOD,Constants.EMPTY)
 def clearPathFunc(grid):
     grid.travelIsDone = True
     grid.explorationIsDone = True
